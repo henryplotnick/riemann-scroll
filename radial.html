@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lean proof of the Riemann Hypothesis as a circle</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Radial tree of the 175,187 Lean files in the proof of the Riemann Hypothesis, with Main.lean at the centre.">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#fcfcfb; --fg:#0b0b0b; --fg2:#52514e; --dim:#8a8984; --line:#e4e3de; --bar:#f4f3ef; --panel:#ffffff;
+  --accent:#8a3b12; --hover:#efeee9; --edge:11,11,11;
+  --g0:#2a78d6; --g1:#eb6834; --g2:#1baf7a; --g3:#eda100; --g4:#e87ba4; --g5:#008300; --g6:#6250d6; --g7:#9a9993;
+}
+@media (prefers-color-scheme:dark){
+  :root{ color-scheme:dark;
+    --bg:#1a1a19; --fg:#f0efec; --fg2:#c3c2b7; --dim:#85847c; --line:#33322f; --bar:#222220; --panel:#262624;
+    --accent:#e6a26f; --hover:#30302d; --edge:240,239,236;
+    --g0:#3987e5; --g1:#d95926; --g2:#199e70; --g3:#c98500; --g4:#d55181; --g5:#0ca30c; --g6:#9085e9; --g7:#77766f; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+  font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{flex:none;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 10px;
+  background:var(--bar);border-bottom:1px solid var(--line);position:relative;z-index:6}
+h1{font-size:13px;font-weight:650;margin:0;white-space:nowrap}
+h1 span{color:var(--accent)}
+input,button,.btn{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;
+  padding:3px 8px;height:26px;text-decoration:none;display:inline-flex;align-items:center}
+button,.btn{cursor:pointer}
+button:hover,.btn:hover{border-color:var(--accent)}
+input:focus,button:focus-visible,.btn:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#fq{flex:1 1 14em;min-width:0;max-width:34em}
+.sp{margin-left:auto}
+#res{position:absolute;left:10px;right:10px;top:100%;max-height:60vh;overflow:auto;background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#res div{padding:3px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#res div:hover,#res div.on{background:var(--hover)}
+#res .m{color:var(--dim);cursor:default;font-family:system-ui,sans-serif}
+main{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px}
+#stage{position:relative;min-width:0;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
+canvas.drag{cursor:grabbing}
+#zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
+#zoom button{width:30px;height:30px;justify-content:center;font-size:16px;padding:0}
+#zoom #zf{font-size:11px}
+#tip{position:absolute;pointer-events:none;display:none;max-width:min(520px,90%);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:6px 9px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:3}
+#tip b{font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;display:block}
+#tip span{color:var(--fg2)}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg2);pointer-events:none}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px 20px;min-height:0}
+aside h2{font-size:15px;line-height:1.3;margin:0 0 6px;font-weight:650}
+aside h3{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:16px 0 6px;font-weight:600}
+aside p{margin:6px 0;color:var(--fg2)}
+.path{font:600 12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;color:var(--fg)}
+.path i{font-style:normal;font-weight:400;color:var(--fg2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.stat b{display:block;font-size:19px;line-height:1.2;font-weight:650;font-variant-numeric:tabular-nums}
+.stat span{color:var(--fg2);font-size:12px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.lg{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center}
+.lg button{all:unset;display:contents;cursor:pointer}
+.lg .sw{width:12px;height:12px;border-radius:3px}
+.lg .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg .ct{color:var(--fg2);font-variant-numeric:tabular-nums;text-align:right}
+.lg button:hover .nm{text-decoration:underline}
+.lg button.off .nm,.lg button.off .ct{color:var(--dim)}
+.lg button.off .sw{opacity:.25}
+.lg button:focus-visible .nm{outline:2px solid var(--accent);outline-offset:2px}
+ul.fl{list-style:none;margin:0;padding:0;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+ul.fl li{display:flex;gap:6px;align-items:center;padding:1px 4px;border-radius:4px;cursor:pointer}
+ul.fl li:hover{background:var(--hover)}
+ul.fl li i{flex:none;width:8px;height:8px;border-radius:2px}
+ul.fl li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.more{color:var(--dim);font-size:12px;margin:4px 0 0}
+a{color:var(--accent)}
+kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--bar)}
+@media (max-width:760px){
+  main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,44%)}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  h1 .long{display:none}
+}
+.hist{display:flex;align-items:flex-end;gap:1px;height:64px;margin:8px 0 2px;border-bottom:1px solid var(--line)}
+.hist div{flex:1 1 0;background:var(--g0);border-radius:2px 2px 0 0;min-height:1px;cursor:pointer}
+.hist div:hover,.hist div.on{background:var(--fg)}
+.hax{display:flex;justify-content:space-between;color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+ol.chain{list-style:none;margin:0;padding:0;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+ol.chain li{display:flex;gap:6px;align-items:center;padding:1px 4px;border-radius:4px;cursor:pointer}
+ol.chain li:hover{background:var(--hover)}
+ol.chain li b{flex:none;width:2.2em;text-align:right;color:var(--dim);font-weight:400}
+ol.chain li i{flex:none;width:8px;height:8px;border-radius:2px}
+ol.chain li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ol.chain li.me span{font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>RH</span><span class="long" style="color:inherit"> · the proof as a circle</span></h1>
+  <input id="fq" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false">
+  <a class="btn sp" href="graph.html">Layered map</a>
+  <a class="btn" href="index.html">Read the text →</a>
+  <div id="res" role="listbox"></div>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="cv" tabindex="0" aria-label="Radial tree of the proof's files around Main.lean. Use the search box and the side panel to explore it without a pointer."></canvas>
+    <div id="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zf" title="Show the whole circle">Fit</button></div>
+    <div id="tip"></div>
+    <div id="load">Loading 175,187 files and their imports…</div>
+  </div>
+  <aside id="side" aria-live="polite"></aside>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage'),side=$('side'),tip=$('tip'),fq=$('fq'),resEl=$('res');
+var buf=document.createElement('canvas'),bctx=buf.getContext('2d');
+var fmt=function(n){return n.toLocaleString('en-US')};
+var GROUPS=[
+  ['Development/AbelianVarietyTheory/','Development / AbelianVarietyTheory'],
+  ['Development/AutomorphicArithmetic/','Development / AutomorphicArithmetic'],
+  ['Formalism/','Formalism'],
+  ['Development/AutomorphicSpectrum/','Development / AutomorphicSpectrum'],
+  ['GroundTheory/','GroundTheory'],
+  ['Development/WeilBound/','Development / WeilBound'],
+  ['ReciprocityTheory/','ReciprocityTheory'],
+  [null,'All other folders']
+];
+var NG=GROUPS.length,TAU=Math.PI*2;
+var n=0,E=0,off,tg,roff,rtg,path,lower,start,grp,gcount=new Int32Array(NG);
+var dist,par,bfs,size,th,wd,rad,kidOff,kids,ringOff,ringIds,nR=0,ringCount,MAIN=-1,mostUsed=0;
+var edgeP=[],dotP=[];               /* world-space Path2D per folder colour */
+var selEdgeP=null,selDotP=[],chainP=null,impP=null;
+var s=1,tx=0,ty=0,W=0,H=0,dpr=1,fitS=1;
+var sel=-1,hov=-1,iso=-1,raf=0,col=[],ink={},nSub=0,nUp=0;
+var bS=0,bTx=0,bTy=0,bDirty=true,bT=0;  /* transform the cached bitmap was drawn at */
+
+function gunzip(url,asText){
+  return fetch(url).then(function(r){ if(!r.ok) throw new Error(url+' '+r.status); return r.arrayBuffer() }).then(function(ab){
+    var b=new Uint8Array(ab),p;
+    if(b[0]===0x1f&&b[1]===0x8b){
+      if(typeof DecompressionStream==='undefined') throw new Error('This browser is too old to unpack the data.');
+      p=new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')));
+    } else p=new Response(b);
+    return asText?p.text():p.arrayBuffer();
+  });
+}
+function readColors(){
+  var cs=getComputedStyle(document.documentElement),g=function(k){return cs.getPropertyValue(k).trim()};
+  col=[]; for(var i=0;i<NG;i++) col.push(g('--g'+i));
+  ink={bg:g('--bg'),fg:g('--fg'),fg2:g('--fg2'),dim:g('--dim'),line:g('--line'),edge:g('--edge'),panel:g('--panel')};
+}
+
+/* ---------- build the radial tree ---------- */
+function build(bin,txt){
+  var dv=new DataView(bin); n=dv.getInt32(0,true); E=dv.getInt32(4,true);
+  off=new Int32Array(bin.slice(8,8+4*(n+1))); tg=new Int32Array(bin.slice(8+4*(n+1),8+4*(n+1)+4*E));
+  var ls=txt.split('\n'); if(ls[ls.length-1]==='') ls.pop();
+  path=new Array(n); lower=new Array(n); start=new Int32Array(n); grp=new Uint8Array(n);
+  var i,j,k,g,v,a;
+  for(i=0;i<n;i++){ k=ls[i].indexOf('\t'); start[i]=+ls[i].slice(0,k); var p=ls[i].slice(k+1); path[i]=p; lower[i]=p.toLowerCase();
+    for(g=0;g<NG-1;g++) if(p.lastIndexOf(GROUPS[g][0],0)===0) break;
+    grp[i]=g; gcount[g]++; if(p==='Main.lean') MAIN=i; }
+  roff=new Int32Array(n+1); for(k=0;k<E;k++) roff[tg[k]+1]++;
+  for(i=0;i<n;i++) roff[i+1]+=roff[i];
+  rtg=new Int32Array(E); var fill=roff.slice(0,n);
+  for(i=0;i<n;i++) for(k=off[i];k<off[i+1];k++) rtg[fill[tg[k]]++]=i;
+  var best=0; for(i=0;i<n;i++){ var d=roff[i+1]-roff[i]; if(d>best){best=d;mostUsed=i} }
+
+  /* breadth-first from Main.lean along imports: ring = fewest import steps from Main.
+     Each file hangs off the first file that reached it (its parent in the tree). */
+  dist=new Int32Array(n).fill(-1); par=new Int32Array(n).fill(-1); bfs=new Int32Array(n);
+  var h=0,t=0; dist[MAIN]=0; bfs[t++]=MAIN;
+  while(h<t){ v=bfs[h++]; for(k=off[v];k<off[v+1];k++){ j=tg[k]; if(dist[j]<0){ dist[j]=dist[v]+1; par[j]=v; bfs[t++]=j } } }
+  nR=dist[bfs[t-1]]+1;
+  size=new Int32Array(n);
+  for(i=t-1;i>=0;i--){ v=bfs[i]; size[v]+=1; if(par[v]>=0) size[par[v]]+=size[v] }
+  kidOff=new Int32Array(n+1); for(i=0;i<n;i++) if(par[i]>=0) kidOff[par[i]+1]++;
+  for(i=0;i<n;i++) kidOff[i+1]+=kidOff[i];
+  kids=new Int32Array(n); fill=kidOff.slice(0,n);
+  for(i=0;i<t;i++){ v=bfs[i]; if(par[v]>=0) kids[fill[par[v]]++]=v }
+  /* children ordered by folder, then biggest branch first, so colours stay together */
+  for(i=0;i<n;i++){ a=kidOff[i]; var b=kidOff[i+1]; if(b-a>1){
+    var arr=Array.prototype.slice.call(kids.subarray(a,b)); arr.sort(function(x,y){ return (grp[x]-grp[y])||(size[y]-size[x])||(x-y) });
+    for(j=0;j<arr.length;j++) kids[a+j]=arr[j] } }
+  /* each file gets a slice of the circle proportional to how many files branch out from it */
+  th=new Float64Array(n); wd=new Float64Array(n); var lo=new Float64Array(n);
+  lo[MAIN]=-Math.PI/2; wd[MAIN]=TAU; th[MAIN]=0;
+  for(i=0;i<t;i++){ v=bfs[i]; var pos=lo[v],tot=size[v]-1;
+    for(k=kidOff[v];k<kidOff[v+1];k++){ j=kids[k]; var w=wd[v]*size[j]/tot; lo[j]=pos; wd[j]=w; th[j]=pos+w/2; pos+=w } }
+  /* per-ring lists sorted by angle, for hit testing */
+  ringCount=new Int32Array(nR); for(i=0;i<n;i++) ringCount[dist[i]]++;
+  ringOff=new Int32Array(nR+1); for(i=0;i<nR;i++) ringOff[i+1]=ringOff[i]+ringCount[i];
+  ringIds=new Int32Array(n); fill=ringOff.slice(0,nR);
+  for(i=0;i<n;i++) ringIds[fill[dist[i]]++]=i;
+  for(i=0;i<nR;i++){ var sub=Array.prototype.slice.call(ringIds.subarray(ringOff[i],ringOff[i+1])); sub.sort(function(x,y){return th[x]-th[y]}); ringIds.set(sub,ringOff[i]) }
+  rad=new Float32Array(n); rad[MAIN]=0.2;
+  for(i=1;i<nR;i++){ var c0=ringOff[i],c1=ringOff[i+1];
+    for(k=c0;k<c1;k++){ v=ringIds[k];
+      var gp=c1-c0===1?TAU:Math.min(k>c0?th[v]-th[ringIds[k-1]]:TAU, k<c1-1?th[ringIds[k+1]]-th[v]:TAU);
+      rad[v]=Math.max(0.0015,Math.min(0.2,0.45*i*gp)) } }
+  /* world-space paths: one per colour, drawn with the view transform */
+  for(g=0;g<NG;g++){ edgeP.push(new Path2D()); dotP.push(new Path2D()) }
+  for(i=0;i<n;i++){ if(i!==MAIN){ branch(edgeP[grp[i]],i); dot(dotP[grp[i]],i) } }
+}
+function wx(r,a){ return r*Math.cos(a) }
+function wy(r,a){ return r*Math.sin(a) }
+function branch(P,v){
+  var p=par[v],r=dist[v],a=th[v],pa=p===MAIN?a:th[p];
+  P.moveTo(wx(r-1,pa),wy(r-1,pa));
+  P.bezierCurveTo(wx(r-0.55,pa),wy(r-0.55,pa),wx(r-0.45,a),wy(r-0.45,a),wx(r,a),wy(r,a));
+}
+function dotR(v){ return rad[v] }
+function dot(P,v){ var r=dotR(v),x=wx(dist[v],th[v]),y=wy(dist[v],th[v]); P.moveTo(x+r,y); P.arc(x,y,r,0,TAU) }
+
+/* ---------- view ---------- */
+function resize(){
+  dpr=window.devicePixelRatio||1; W=stage.clientWidth; H=stage.clientHeight;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); buf.width=cv.width; buf.height=cv.height; bDirty=true;
+}
+function fit(){ fitS=(Math.min(W,H)/2-26)/(nR-1); s=fitS; tx=W/2; ty=H/2-6; bDirty=true; schedule() }
+function sx(v){ return wx(dist[v],th[v])*s+tx }
+function sy(v){ return wy(dist[v],th[v])*s+ty }
+function zoomAt(f,cx,cy){
+  var ns=Math.max(fitS*0.5,Math.min(fitS*4000,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; bDirty=true; schedule();
+}
+function reveal(v){
+  var x=sx(v),y=sy(v);
+  if(x<40||x>W-40||y<40||y>H-40){ tx+=W/2-x; ty+=H/2-y; bDirty=true }
+  schedule();
+}
+function nodeAt(px,py){
+  if(!n) return -1;
+  var x=(px-tx)/s,y=(py-ty)/s,r=Math.hypot(x,y),k=Math.round(r);
+  if(k===0) return Math.hypot(px-tx,py-ty)<Math.max(8,0.3*s)?MAIN:-1;
+  var bestV=-1,bestD=1e9;
+  for(var kk=Math.max(1,k-1);kk<=Math.min(nR-1,k+1);kk++){
+    var a=Math.atan2(y,x); if(a<-Math.PI/2) a+=TAU;
+    var lo2=ringOff[kk],hi=ringOff[kk+1];
+    if(lo2===hi) continue;
+    var L=lo2,R=hi-1; while(L<R){ var m=(L+R)>>1; if(th[ringIds[m]]<a) L=m+1; else R=m }
+    for(var q=Math.max(lo2,L-2);q<=Math.min(hi-1,L+1);q++){ var v=ringIds[q],d=Math.hypot(sx(v)-px,sy(v)-py); if(d<bestD){bestD=d;bestV=v} }
+  }
+  return bestD<=Math.max(7,dotR(bestV)*s+3)?bestV:-1;
+}
+
+/* ---------- selection ---------- */
+function select(v,noReveal){
+  sel=v; iso=-1; selEdgeP=null; selDotP=[]; chainP=null; impP=null; nSub=0; nUp=0;
+  if(v>=0){
+    var g,i,k;
+    selEdgeP=[]; for(g=0;g<NG;g++){ selEdgeP.push(new Path2D()); selDotP.push(new Path2D()) }
+    /* the branch growing out of v in the circle */
+    var st=[v];
+    while(st.length){ var a=st.pop(); if(a!==MAIN){ branch(selEdgeP[grp[a]],a); dot(selDotP[grp[a]],a) } nSub++;
+      for(k=kidOff[a];k<kidOff[a+1];k++) st.push(kids[k]) }
+    nSub--;
+    /* the route back to Main.lean */
+    chainP=new Path2D(); for(i=v;i!==MAIN&&i>=0;i=par[i]) branch(chainP,i);
+    /* every file it imports directly, wherever it sits */
+    impP=new Path2D(); var x1=wx(dist[v],th[v]),y1=wy(dist[v],th[v]);
+    for(k=off[v];k<off[v+1];k++){ var j=tg[k]; impP.moveTo(x1,y1); impP.lineTo(wx(dist[j],th[j]),wy(dist[j],th[j])) }
+    /* true count of everything it rests on */
+    var seen=new Uint8Array(n); st=[v]; seen[v]=1;
+    while(st.length){ a=st.pop(); for(k=off[a];k<off[a+1];k++){ var b=tg[k]; if(!seen[b]){ seen[b]=1; nUp++; st.push(b) } } }
+    if(!noReveal) reveal(v);
+  }
+  try{ history.replaceState(null,'',v>=0?'#n'+v:location.pathname+location.search) }catch(e){}
+  bDirty=true; panel(); schedule();
+}
+function isolate(g){ if(sel>=0) select(-1); iso=(iso===g?-1:g); bDirty=true; panel(); schedule() }
+
+/* ---------- drawing ---------- */
+function schedule(){ if(!raf) raf=requestAnimationFrame(draw) }
+/* the heavy layer (175k branches + dots) is drawn into a cached bitmap; while panning or
+   zooming the bitmap is moved, then redrawn crisply once the view settles */
+function heavy(){
+  var c=bctx; c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,buf.width,buf.height);
+  c.setTransform(dpr*s,0,0,dpr*s,dpr*tx,dpr*ty);
+  var any=sel>=0||iso>=0,g,lw=1/s;
+  /* ring guides */
+  c.lineWidth=lw; c.strokeStyle=ink.line;
+  for(var r=1;r<nR;r++){ if(r%5&&s<30) continue; c.beginPath(); c.arc(0,0,r,0,TAU); c.stroke() }
+  c.lineWidth=Math.min(0.9,Math.max(0.35,s*0.004))*lw*2;
+  c.globalAlpha=any?0.07:(s<fitS*3?0.33:0.5);
+  for(g=0;g<NG;g++){ c.strokeStyle=col[g]; c.stroke(edgeP[g]) }
+  c.globalAlpha=any?0.16:1;
+  for(g=0;g<NG;g++){ c.fillStyle=col[g]; c.fill(dotP[g]) }
+  c.globalAlpha=1;
+  if(iso>=0){
+    c.globalAlpha=0.55; c.strokeStyle=col[iso]; c.lineWidth=Math.max(0.6,s*0.004)*lw*2; c.stroke(edgeP[iso]);
+    c.globalAlpha=1; c.fillStyle=col[iso]; c.fill(dotP[iso]);
+  }
+  if(sel>=0){
+    c.globalAlpha=0.7; c.lineWidth=Math.max(0.7,Math.min(2,s*0.006))*lw*1.6;
+    for(g=0;g<NG;g++){ c.strokeStyle=col[g]; c.stroke(selEdgeP[g]) }
+    c.globalAlpha=1; for(g=0;g<NG;g++){ c.fillStyle=col[g]; c.fill(selDotP[g]) }
+    c.strokeStyle='rgba('+ink.edge+',0.45)'; c.lineWidth=lw; c.stroke(impP);
+    c.strokeStyle=ink.bg; c.lineWidth=lw*6; c.stroke(chainP);
+    c.strokeStyle=ink.fg; c.lineWidth=lw*2.5; c.stroke(chainP);
+  }
+  bS=s; bTx=tx; bTy=ty; bDirty=false;
+}
+function draw(){
+  raf=0; if(!n) return;
+  var moving=bS&&(Date.now()-bT<140);
+  if(bDirty&&!moving) heavy();
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=ink.bg; ctx.fillRect(0,0,cv.width,cv.height);
+  var f=s/bS; ctx.setTransform(f,0,0,f,dpr*(tx-bTx*f),dpr*(ty-bTy*f)); ctx.drawImage(buf,0,0);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(bDirty){ clearTimeout(draw.t); draw.t=setTimeout(function(){ bT=0; schedule() },150) }
+  /* Main.lean */
+  var mx=tx,my=ty; ctx.beginPath(); ctx.arc(mx,my,5,0,TAU); ctx.fillStyle=ink.fg; ctx.fill();
+  ctx.font='600 11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.lineWidth=4; ctx.strokeStyle=ink.bg; ctx.strokeText('Main.lean',mx,my+9); ctx.fillStyle=ink.fg; ctx.fillText('Main.lean',mx,my+9);
+  ringLabels(); labels();
+  if(sel>=0) marker(sel,true);
+  if(hov>=0&&hov!==sel) marker(hov,false);
+}
+function ringLabels(){
+  ctx.font='11px system-ui,-apple-system,"Segoe UI",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  var step=s<fitS*1.6?10:s<fitS*4?5:1;
+  for(var r=step;r<nR;r+=step){ var x=tx,y=ty-r*s; if(y<14||y>H-10) continue;
+    var t=String(r); ctx.lineWidth=4; ctx.strokeStyle=ink.bg; ctx.strokeText(t,x,y); ctx.fillStyle=ink.dim; ctx.fillText(t,x,y) }
+}
+function base(p){ var i=p.lastIndexOf('/'); return p.slice(i+1).replace(/\.lean$/,'') }
+function label(v,strong){
+  var x=sx(v),y=sy(v); if(x<-50||x>W+50||y<-20||y>H+20) return;
+  var a=th[v],right=Math.cos(a)>=0,t=base(path[v]);
+  ctx.save(); ctx.translate(x,y); ctx.rotate(right?a:a+Math.PI);
+  ctx.textAlign=right?'left':'right'; ctx.textBaseline='middle';
+  ctx.font=(strong?'600 ':'')+'11.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  var o=right?9:-9; ctx.lineWidth=4; ctx.strokeStyle=ink.bg; ctx.strokeText(t,o,0); ctx.fillStyle=strong?ink.fg:ink.fg2; ctx.fillText(t,o,0);
+  ctx.restore();
+}
+function labels(){
+  /* name the inner rings once there is room, and the files around a selection */
+  var i,k,v;
+  for(k=1;k<nR&&s>=90;k++){
+    var cnt=ringCount[k],circ=TAU*k*s; if(circ/cnt<16) break;
+    for(i=ringOff[k];i<ringOff[k+1];i++) label(ringIds[i],false);
+  }
+  if(sel>=0){
+    if(s>=90) for(v=par[sel];v>=0&&v!==MAIN;v=par[v]) label(v,false);
+    var kd=kidOff[sel+1]-kidOff[sel];
+    if(kd&&s>=90&&TAU*(dist[sel]+1)*s*wd[sel]/kd>=14) for(k=kidOff[sel];k<kidOff[sel+1];k++) label(kids[k],false);
+    if(sel!==MAIN) label(sel,true);
+  }
+}
+function marker(v,strong){
+  var x=v===MAIN?tx:sx(v),y=v===MAIN?ty:sy(v),r=Math.max(6,dotR(v)*s+3);
+  ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.lineWidth=strong?4:3; ctx.strokeStyle=ink.bg; ctx.stroke();
+  ctx.lineWidth=strong?2:1.5; ctx.strokeStyle=ink.fg; ctx.stroke();
+}
+
+/* ---------- side panel ---------- */
+function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e }
+function stat(num,label){ var d=el('div','stat'); d.appendChild(el('b',null,num)); d.appendChild(el('span',null,label)); return d }
+function legend(){
+  var box=el('div','lg');
+  GROUPS.forEach(function(G,g){
+    var b=el('button',iso>=0&&iso!==g?'off':''),sw=el('span','sw'); sw.style.background=col[g];
+    b.title='Show only '+G[1]; b.setAttribute('aria-pressed',iso===g);
+    b.appendChild(sw); b.appendChild(el('span','nm',G[1])); b.appendChild(el('span','ct',fmt(gcount[g])));
+    b.onclick=function(){ isolate(g) }; box.appendChild(b);
+  });
+  return box;
+}
+function hist(){
+  var wrap=el('div'),h=el('div','hist'),mx=0,i;
+  for(i=0;i<nR;i++) if(ringCount[i]>mx) mx=ringCount[i];
+  for(i=0;i<nR;i++){ var b=el('div'); b.style.height=Math.max(1,ringCount[i]/mx*100)+'%';
+    b.title='Ring '+i+': '+fmt(ringCount[i])+(ringCount[i]===1?' file':' files'); h.appendChild(b) }
+  wrap.appendChild(h);
+  var ax=el('div','hax'); ax.appendChild(el('span',null,'ring 0')); ax.appendChild(el('span',null,'ring '+(nR-1))); wrap.appendChild(ax);
+  return wrap;
+}
+function panel(){
+  side.textContent='';
+  if(sel<0){
+    side.appendChild(el('h2',null,'The proof as a circle'));
+    side.appendChild(el('p',null,'Main.lean is the dot in the centre. Ring 1 is what it imports, ring 2 is what those import, and so on outwards. A file’s ring is the fewest import steps between it and Main.lean.'));
+    side.appendChild(el('p',null,'Each file is drawn once, hanging off one file that imports it, so the picture is a tree; its slice of the circle is proportional to how many files branch out from it. Most files are imported by several others: select one to see all its direct imports.'));
+    var st=el('div','stats'); st.appendChild(stat(fmt(n),'files')); st.appendChild(stat(fmt(nR),'rings, counting Main.lean as ring 0'));
+    var pk=0; for(var i=1;i<nR;i++) if(ringCount[i]>ringCount[pk]) pk=i;
+    st.appendChild(stat(String(pk),'busiest ring ('+fmt(ringCount[pk])+' files)')); st.appendChild(stat(String(nR-1),'import steps to the farthest files'));
+    side.appendChild(st);
+    side.appendChild(el('h3',null,'Files in each ring')); side.appendChild(hist());
+    side.appendChild(el('h3',null,'Start with'));
+    var row=el('div','row');
+    [['Main.lean',MAIN],['The most-imported file',mostUsed],['A random file',-2]].forEach(function(p){
+      var b=el('button',null,p[0]); b.onclick=function(){ select(p[1]===-2?Math.floor(Math.random()*n):p[1]) }; row.appendChild(b) });
+    side.appendChild(row);
+    side.appendChild(el('h3',null,'Folders (click to show one)')); side.appendChild(legend());
+    side.appendChild(el('h3',null,'Getting around'));
+    side.appendChild(el('p',null,'Scroll or pinch to zoom, drag to pan. Names appear once there is room for them. Click a file to light up its branch and the route back to Main.lean.'));
+    return;
+  }
+  var v=sel,p=path[v],cut=p.lastIndexOf('/'),pd=el('div','path');
+  if(cut>=0) pd.appendChild(el('i',null,p.slice(0,cut+1))); pd.appendChild(document.createTextNode(p.slice(cut+1)));
+  side.appendChild(pd);
+  var meta=el('p'),sw=el('span'); sw.style.cssText='display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:'+col[grp[v]];
+  meta.appendChild(sw); meta.appendChild(document.createTextNode(GROUPS[grp[v]][1]+' · ring '+dist[v]+(v===MAIN?' (the centre)':' · '+dist[v]+(dist[v]===1?' import step':' import steps')+' from Main.lean')));
+  side.appendChild(meta);
+  var st2=el('div','stats');
+  st2.appendChild(stat(fmt(nSub),v===MAIN?'files in the whole tree':'files branching out from it here'));
+  st2.appendChild(stat(fmt(nUp),'files it rests on in total ('+(nUp/(n-1)*100).toFixed(nUp/(n-1)<0.01?2:1)+'%)'));
+  side.appendChild(st2);
+  var row2=el('div','row'),rd=el('a','btn','Read this file →'); rd.href='index.html#L'+(start[v]+1); row2.appendChild(rd);
+  var mp=el('a','btn','On the layered map'); mp.href='graph.html#n'+v; row2.appendChild(mp);
+  var cl=el('button',null,'Clear'); cl.onclick=function(){ select(-1) }; row2.appendChild(cl);
+  side.appendChild(row2);
+  if(v!==MAIN){
+    side.appendChild(el('h3',null,'Shortest route to Main.lean ('+dist[v]+' steps)'));
+    var ol=el('ol','chain'),ch=[]; for(var u=v;u>=0;u=par[u]) ch.push(u);
+    ch.reverse().forEach(function(u){ var li=el('li',u===v?'me':''),c=el('i'); c.style.background=col[grp[u]];
+      li.appendChild(el('b',null,String(dist[u]))); li.appendChild(c); li.appendChild(el('span',null,base(path[u])));
+      li.title=path[u]; li.onclick=function(){ select(u) }; ol.appendChild(li) });
+    side.appendChild(ol);
+  }
+  var kd=kidOff[v+1]-kidOff[v];
+  side.appendChild(el('h3',null,'Branches out to ('+fmt(kd)+')'));
+  if(kd) side.appendChild(fileList(kids,kidOff[v],kidOff[v+1]));
+  else side.appendChild(el('p',null,v===MAIN?'':'Nothing hangs off this file in the circle: everything it imports is reached by a shorter route.'));
+  side.appendChild(el('h3',null,'Imports directly ('+fmt(off[v+1]-off[v])+')'));
+  if(off[v+1]>off[v]) side.appendChild(fileList(tg,off[v],off[v+1])); else side.appendChild(el('p',null,'Only Mathlib.'));
+}
+function fileList(arr,a,b){
+  var ul=el('ul','fl'),ids=Array.prototype.slice.call(arr.subarray(a,b)).sort(function(x,y){return path[x]<path[y]?-1:1}),lim=Math.min(ids.length,60);
+  for(var i=0;i<lim;i++){ (function(v){ var li=el('li'),c=el('i'); c.style.background=col[grp[v]];
+    li.appendChild(c); li.appendChild(el('span',null,base(path[v]))); li.title=path[v]+' · ring '+dist[v];
+    li.onclick=function(){ select(v) }; ul.appendChild(li) })(ids[i]) }
+  var box=el('div'); box.appendChild(ul);
+  if(ids.length>lim) box.appendChild(el('p','more','and '+fmt(ids.length-lim)+' more'));
+  return box;
+}
+
+/* ---------- pointer, wheel, keys ---------- */
+(function(){
+  var pts=new Map(),moved=0,down=null,lastD=0;
+  function xy(e){ var r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top] }
+  function moveStamp(){ bT=Date.now(); bDirty=true }
+  cv.addEventListener('pointerdown',function(e){
+    cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,xy(e)); moved=0; down=xy(e); cv.classList.add('drag'); hideTip();
+    if(pts.size===2){ var a=Array.from(pts.values()); lastD=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]) }
+  });
+  cv.addEventListener('pointermove',function(e){
+    var p=xy(e);
+    if(!pts.has(e.pointerId)){ if(e.pointerType==='mouse') hover(p[0],p[1]); return }
+    var q=pts.get(e.pointerId); pts.set(e.pointerId,p);
+    if(pts.size===1){ tx+=p[0]-q[0]; ty+=p[1]-q[1]; moved+=Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1]); moveStamp(); schedule() }
+    else if(pts.size===2){ var a=Array.from(pts.values()),d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);
+      if(lastD>0){ moveStamp(); zoomAt(d/lastD,(a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2) } lastD=d; moved=99 }
+  });
+  function up(e){
+    if(!pts.has(e.pointerId)) return; pts.delete(e.pointerId); if(!pts.size) cv.classList.remove('drag');
+    if(e.type==='pointerup'&&moved<5&&down&&!pts.size){ var v=nodeAt(down[0],down[1]); if(v!==sel) select(v,true) }
+  }
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  cv.addEventListener('pointerleave',function(){ if(hov>=0){ hov=-1; schedule() } hideTip() });
+  cv.addEventListener('wheel',function(e){ e.preventDefault(); var p=xy(e); moveStamp();
+    var dy=e.deltaMode===1?e.deltaY*32:e.deltaY; zoomAt(Math.exp(-dy*(e.ctrlKey?0.01:0.0022)),p[0],p[1]); hideTip() },{passive:false});
+  cv.addEventListener('keydown',function(e){
+    var st=60; if(e.key==='ArrowLeft') tx+=st; else if(e.key==='ArrowRight') tx-=st; else if(e.key==='ArrowUp') ty+=st; else if(e.key==='ArrowDown') ty-=st;
+    else if(e.key==='+'||e.key==='=') return zoomAt(1.4,W/2,H/2); else if(e.key==='-') return zoomAt(1/1.4,W/2,H/2);
+    else if(e.key==='Escape') return select(-1); else return;
+    e.preventDefault(); bDirty=true; schedule();
+  });
+  $('zi').onclick=function(){ zoomAt(1.6,W/2,H/2) }; $('zo').onclick=function(){ zoomAt(1/1.6,W/2,H/2) }; $('zf').onclick=fit;
+})();
+function hideTip(){ tip.style.display='none' }
+function hover(px,py){
+  var v=nodeAt(px,py); if(v!==hov){ hov=v; schedule() }
+  if(v<0){ hideTip(); return }
+  tip.textContent=''; tip.appendChild(el('b',null,path[v]));
+  tip.appendChild(el('span',null,GROUPS[grp[v]][1]+' · ring '+dist[v]+' · imports '+fmt(off[v+1]-off[v])+' · imported by '+fmt(roff[v+1]-roff[v])));
+  tip.style.display='block';
+  var tw=tip.offsetWidth,th2=tip.offsetHeight,x=px+14,y=py+14;
+  if(x+tw>W-6) x=px-tw-14; if(y+th2>H-6) y=py-th2-14;
+  tip.style.left=Math.max(6,x)+'px'; tip.style.top=Math.max(6,y)+'px';
+}
+
+/* ---------- file finder ---------- */
+var hsel=-1,hits=[],fT=0;
+function hideRes(){ resEl.style.display='none'; hsel=-1 }
+function showRes(){
+  var q=fq.value.trim().toLowerCase(); resEl.textContent=''; hits=[]; hsel=-1;
+  if(!q||!n){ hideRes(); return }
+  resEl.style.display='block';
+  var terms=q.split(/\s+/),total=0;
+  for(var i=0;i<n;i++){ var p=lower[i],ok=true; for(var k=0;k<terms.length;k++) if(p.indexOf(terms[k])<0){ok=false;break}
+    if(ok){ total++; if(hits.length<80) hits.push(i) } }
+  var head=el('div','m'); head.textContent=total?fmt(total)+' of '+fmt(n)+' files match'+(total>hits.length?' — showing the first '+hits.length:''):'No file name contains that.';
+  resEl.appendChild(head);
+  hits.forEach(function(v,j){ var d=el('div',null,path[v]); d.setAttribute('role','option'); d.onclick=function(){ pick(j) }; resEl.appendChild(d) });
+}
+function pick(j){ if(j<0||j>=hits.length) return; var v=hits[j]; hideRes(); fq.blur(); select(v); cv.focus() }
+fq.addEventListener('input',function(){ clearTimeout(fT); fT=setTimeout(showRes,140) });
+fq.addEventListener('focus',function(){ if(fq.value.trim()) showRes() });
+fq.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ hideRes(); return }
+  if(e.key==='Enter'){ pick(hsel<0?0:hsel); return }
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp') return;
+  e.preventDefault(); if(!hits.length) return;
+  var kd=resEl.children; if(hsel>=0) kd[hsel+1].classList.remove('on');
+  hsel=(hsel+(e.key==='ArrowDown'?1:-1)+hits.length)%hits.length;
+  kd[hsel+1].classList.add('on'); kd[hsel+1].scrollIntoView({block:'nearest'});
+});
+document.addEventListener('pointerdown',function(e){ if(!resEl.contains(e.target)&&e.target!==fq) hideRes() });
+
+/* ---------- start ---------- */
+readColors();
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){ readColors(); bDirty=true; panel(); schedule() });
+window.addEventListener('resize',function(){ resize(); schedule() });
+Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true)]).then(function(r){
+  build(r[0],r[1]); $('load').style.display='none'; resize(); fit();
+  var m=/^#n(\d+)$/.exec(location.hash),v=m?+m[1]:-1;
+  if(v>=0&&v<n) select(v,true); else panel();
+  window.__radial={n:function(){return n},rings:function(){return Array.from(ringCount)},dist:function(v){return dist[v]},par:function(v){return par[v]},
+    sx:sx,sy:sy,sel:function(){return sel},select:select,zoomAt:zoomAt,size:function(v){return size[v]},nodeAt:nodeAt,
+    timeHeavy:function(){ var t=performance.now(); heavy(); return performance.now()-t }};
+}).catch(function(e){ $('load').textContent='Could not load the graph: '+e.message });
+})();
+</script>
+</body>
+</html>

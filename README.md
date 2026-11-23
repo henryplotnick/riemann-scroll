@@ -22,6 +22,15 @@ Within a column, files can be arranged two ways (toggle at the top of the map):
   Import lines are on average 72% shorter vertically than in the folder layout.
 - **By folder:** grouped by folder, then alphabetical.
 
+## The proof as a circle
+
+`radial.html` puts `Main.lean` at the centre. Ring 1 is what it imports, ring 2 is what those
+import, and so on: a file's ring is the fewest import steps between it and `Main.lean`.
+Every file is within 43 steps. Each file is drawn once, hanging off one file that imports it,
+with a slice of the circle proportional to how many files branch out from it. Selecting a
+file shows its shortest route back to `Main.lean`. It is computed in the browser from
+`graph.bin.gz`.
+
 ## How it works
 
 The combined text is about 1 GB, too large for a browser to open as one document.
