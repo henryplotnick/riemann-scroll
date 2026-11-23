@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Barycenter ordering for the map: place each file near the files it is connected to.
 
-usage: python3 -I bary.py <site_dir> [sweeps]
+usage: python3 -I bary.py <site_dir> [sweeps] [combined_sweeps] [topics]
 Reads graph.bin.gz + files.gz from the site, writes order.bin.gz there:
 little-endian uint16 per node = its slot within its layer (top to bottom).
 """
@@ -10,6 +10,8 @@ import numpy as np
 
 GROUPS = ['Development/AbelianVarietyTheory/', 'Development/AutomorphicArithmetic/', 'Formalism/',
           'Development/AutomorphicSpectrum/', 'GroundTheory/', 'Development/WeilBound/', 'ReciprocityTheory/']
+TOPICS = ['ModularCurve', 'AlgebraicGeometry', 'CerednikDrinfeld', 'AutomorphicForm', 'AlgebraicCurve',
+          'LanglandsTunnell', 'WeierstrassCurve']
 
 
 def main():
@@ -33,7 +35,15 @@ def main():
     lw = np.bincount(layer, minlength=L)
 
     # starting point = the folder layout the page already uses
-    grp = np.array([next((g for g, k in enumerate(GROUPS) if p.startswith(k)), len(GROUPS)) for p in paths])
+    if len(sys.argv) > 4 and sys.argv[4] == 'topics':   # Fermat project: colour by topic in the file name
+        import re
+        tre = re.compile(r'^(?:Def|Thm|S|D)_([A-Za-z0-9]+)(?:_|\.lean$)')
+        def g_of(p):
+            m = tre.match(p.rsplit('/', 1)[-1])
+            return TOPICS.index(m.group(1)) if m and m.group(1) in TOPICS else len(TOPICS)
+        grp = np.array([g_of(p) for p in paths])
+    else:
+        grp = np.array([next((g for g, k in enumerate(GROUPS) if p.startswith(k)), len(GROUPS)) for p in paths])
     alpha = np.argsort(np.argsort(np.array(paths, dtype=object)))
     order0 = np.lexsort((alpha, grp, layer))
     members = [None] * L

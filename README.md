@@ -1,5 +1,7 @@
 # The Riemann Hypothesis in Lean, in one scroll
 
+*Also here: the same three views of the Lean proof of Fermat's Last Theorem, in [`fermat/`](fermat/).*
+
 A single web page that shows the complete Lean 4 proof of the Riemann Hypothesis
 (Levent Alpöge with Claude, released 20 November 2026) as one continuously
 scrolling plain-text stream: 175,187 files, 17,374,215 lines of Lean.
@@ -57,4 +59,22 @@ python3 -I tools/bary.py . 64 40      # rebuild the connection ordering
 
 ```bash
 python3 -m http.server 8000   # then open http://localhost:8000
+```
+
+## Fermat's Last Theorem (`fermat/`)
+
+The same scroll, map and circle pages for the complete Lean 4 proof of Fermat's Last Theorem
+published by Anthropic in September 2026 (<https://github.com/anthropics/fermats-last-theorem>,
+Apache License 2.0, commit `6e837e75`): 60,475 files and 13,499,329 lines. Colours follow the topic
+in each file name (`Thm_ModularCurve_…` is `ModularCurve`), since the project keeps its files in three
+flat folders. The circle is centred on `FinalCheck.lean`, the build target that checks the theorem.
+
+```bash
+git clone https://github.com/anthropics/fermats-last-theorem.git flt
+git -C flt checkout 6e837e75355538c7f80bab5b956861e86c4eacc2
+python3 -I tools/fbuild.py flt fermat 6e837e75355538c7f80bab5b956861e86c4eacc2
+python3 -I tools/gbuild.py fermat flt
+python3 -I tools/bary.py fermat 64 40 topics
+python3 -I tools/mkfermat.py .   # regenerate fermat/*.html from the RH pages
+python3 -m http.server 8000      # then open http://localhost:8000/fermat/
 ```
