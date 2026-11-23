@@ -33,6 +33,12 @@ button,.btn{cursor:pointer}
 button:hover,.btn:hover{border-color:var(--accent)}
 input:focus,button:focus-visible,.btn:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #fq{flex:1 1 14em;min-width:0;max-width:34em}
+#arr{display:inline-flex;align-items:center;gap:0;white-space:nowrap}
+#arr .lb{color:var(--fg2);margin-right:6px}
+#arr button{border-radius:0;margin-left:-1px}
+#arr button:first-of-type{border-radius:5px 0 0 5px;margin-left:0}
+#arr button:last-of-type{border-radius:0 5px 5px 0}
+#arr button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg);position:relative;z-index:1}
 .sp{margin-left:auto}
 #res{position:absolute;left:10px;right:10px;top:100%;max-height:60vh;overflow:auto;background:var(--panel);
   border:1px solid var(--line);border-radius:0 0 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;
@@ -84,6 +90,7 @@ kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;ba
   main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,44%)}
   aside{border-left:0;border-top:1px solid var(--line)}
   h1 .long{display:none}
+  #arr .lb{display:none}
 }
 </style>
 </head>
@@ -91,6 +98,7 @@ kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;ba
 <header>
   <h1><span>RH</span><span class="long" style="color:inherit"> · map of the Lean proof</span></h1>
   <input id="fq" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false">
+  <div id="arr" role="group" aria-label="Arrange files within each column"><span class="lb">Arrange</span><button id="aConn" aria-pressed="true" title="Each file sits near the files it is connected to">By connection</button><button id="aFold" aria-pressed="false" title="Files grouped by folder, then alphabetical">By folder</button></div>
   <a class="btn sp" href="index.html">Read the text →</a>
   <div id="res" role="listbox"></div>
 </header>
@@ -121,6 +129,7 @@ var GROUPS=[
 ];
 var NG=GROUPS.length,DX=40;
 var n=0,E=0,off,tg,roff,rtg,path,lower,start,grp,layer,pos,lstart,lw,order,gs,nL=0,gcount=new Int32Array(NG);
+var folderOrder=null,connSlot=null,mode='folder';
 var s=0.1,tx=0,ty=0,W=0,H=0,dpr=1,fitS=0.1;
 var sel=-1,hov=-1,iso=-1,mask=null,nUp=0,nDown=0,raf=0,col=[],ink={},mostUsed=0;
 
@@ -169,7 +178,20 @@ function build(bin,txt){
   for(i=0;i<nL;i++) lstart[i+1]=lstart[i]+lw[i];
   for(i=0;i<n;i++){ var v=order[i]; pos[v]=i-lstart[layer[v]]; gs[layer[v]*(NG+1)+grp[v]+1]++ }
   for(i=0;i<nL;i++) for(g=0;g<NG;g++) gs[i*(NG+1)+g+1]+=gs[i*(NG+1)+g];
+  folderOrder=order.slice();
   mask=new Uint8Array(n);
+}
+/* switch how files are arranged within each column */
+function arrange(m){
+  if(m==='conn'&&!connSlot) m='folder';
+  mode=m;
+  if(m==='folder') order.set(folderOrder);
+  else for(var v=0;v<n;v++) order[lstart[layer[v]]+connSlot[v]]=v;
+  for(var i=0;i<n;i++){ var u=order[i]; pos[u]=i-lstart[layer[u]] }
+  $('aConn').setAttribute('aria-pressed',m==='conn'); $('aFold').setAttribute('aria-pressed',m==='folder');
+  try{ localStorage.setItem('rh-arrange',m) }catch(e){}
+  if(sel>=0) reveal(sel);
+  panel(); schedule();
 }
 
 /* ---------- view ---------- */
@@ -228,31 +250,38 @@ function draw(){
   var wpx=markW(),half=wpx/2,pitch=DX*s,any=sel>=0||iso>=0;
   var L0=Math.max(0,Math.ceil((-half-tx)/pitch)),L1=Math.min(nL-1,Math.floor((W+half-tx)/pitch));
   var merge=s<1.5,gap=s>=4?2:(s>=2.5?1:0),round=s>=8&&ctx.roundRect;
+  /* collect rectangles per folder colour, then fill each colour once.
+     Zoomed out, neighbouring files of one colour merge into a single run. */
   function pass(wantLit,alpha){
+    if(!any&&!wantLit) return;
     ctx.globalAlpha=alpha;
-    for(var g=0;g<NG;g++){
-      ctx.beginPath(); var cnt=0;
-      for(var L=L0;L<=L1;L++){
-        var w=lw[L],x=L*pitch+tx-half,base=ty-w/2*s,o=lstart[L];
-        var a=gs[L*(NG+1)+g],b=gs[L*(NG+1)+g+1];
-        var k0=Math.max(a,Math.floor(-base/s)),k1=Math.min(b,Math.ceil((H-base)/s));
-        if(k0>=k1) continue;
-        if(merge){
-          if(!any){ if(wantLit){ ctx.rect(x,base+k0*s,wpx,Math.max((k1-k0)*s,0.6)); cnt++ } continue }
-          var rs=-1;
-          for(var k=k0;k<=k1;k++){
-            var on=k<k1&&lit(order[o+k])===wantLit;
-            if(on){ if(rs<0) rs=k } else if(rs>=0){ ctx.rect(x,base+rs*s,wpx,Math.max((k-rs)*s,wantLit?1:0.6)); cnt++; rs=-1 }
-          }
-        } else {
-          for(var k2=k0;k2<k1;k2++){
-            if(any&&lit(order[o+k2])!==wantLit) continue; if(!any&&!wantLit) continue;
-            if(round) ctx.roundRect(x,base+k2*s+gap/2,wpx,s-gap,3); else ctx.rect(x,base+k2*s+gap/2,wpx,Math.max(1,s-gap));
-            cnt++;
+    var bufs=[],g; for(g=0;g<NG;g++) bufs.push([]);
+    var minH=any?(wantLit?1:0.6):0.6;
+    for(var L=L0;L<=L1;L++){
+      var w=lw[L],x=L*pitch+tx-half,base=ty-w/2*s,o=lstart[L];
+      var k0=Math.max(0,Math.floor(-base/s)),k1=Math.min(w,Math.ceil((H-base)/s));
+      if(k0>=k1) continue;
+      if(merge){
+        var rs=-1,rg=-1;
+        for(var k=k0;k<=k1;k++){
+          var v=k<k1?order[o+k]:-1,cg=(v>=0&&(!any||lit(v)===wantLit))?grp[v]:-1;
+          if(cg!==rg){
+            if(rg>=0) bufs[rg].push(x,base+rs*s,wpx,Math.max((k-rs)*s,minH));
+            rs=k; rg=cg;
           }
         }
+      } else {
+        for(var k2=k0;k2<k1;k2++){
+          var u=order[o+k2]; if(any&&lit(u)!==wantLit) continue;
+          bufs[grp[u]].push(x,base+k2*s+gap/2,wpx,Math.max(1,s-gap));
+        }
       }
-      if(cnt){ ctx.fillStyle=col[g]; ctx.fill() }
+    }
+    for(g=0;g<NG;g++){
+      var b=bufs[g]; if(!b.length) continue;
+      ctx.beginPath();
+      for(var j=0;j<b.length;j+=4){ if(round) ctx.roundRect(b[j],b[j+1],b[j+2],b[j+3],3); else ctx.rect(b[j],b[j+1],b[j+2],b[j+3]) }
+      ctx.fillStyle=col[g]; ctx.fill();
     }
     ctx.globalAlpha=1;
   }
@@ -341,7 +370,10 @@ function panel(){
   side.textContent='';
   if(sel<0){
     side.appendChild(el('h2',null,'How the proof fits together'));
-    side.appendChild(el('p',null,'Each mark is one Lean file. A file sits one column to the right of the deepest file it imports, so the foundations are on the left and everything funnels into Main.lean on the far right.'));
+    side.appendChild(el('p',null,'Each mark is one Lean file. A file sits one column to the right of the deepest file it imports, so the foundations are on the left and everything funnels into Main.lean on the far right. A column’s height is how many files sit at that depth.'));
+    side.appendChild(el('p',null,mode==='conn'
+      ?'Up and down: each file is placed near the files it imports and the files that import it, so files that work together sit together. Height has no scale; only closeness means something.'
+      :'Up and down: files are grouped by folder, then alphabetical. Within a folder, height means nothing.'));
     var st=el('div','stats'); st.appendChild(stat(fmt(n),'files')); st.appendChild(stat(fmt(E),'imports between them'));
     st.appendChild(stat(fmt(nL),'layers deep')); st.appendChild(stat(fmt(lw[0]),'files importing only Mathlib')); side.appendChild(st);
     side.appendChild(el('h3',null,'Start with'));
@@ -444,11 +476,19 @@ document.addEventListener('pointerdown',function(e){ if(!resEl.contains(e.target
 readColors();
 if(window.matchMedia) window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){ readColors(); panel(); schedule() });
 window.addEventListener('resize',function(){ resize(); schedule() });
-Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true)]).then(function(r){
-  build(r[0],r[1]); $('load').style.display='none'; resize(); fit();
+$('aConn').onclick=function(){ if(mode!=='conn') arrange('conn') };
+$('aFold').onclick=function(){ if(mode!=='folder') arrange('folder') };
+Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true),
+  gunzip('order.bin.gz',false).catch(function(){ return null })]).then(function(r){
+  build(r[0],r[1]);
+  if(r[2]&&r[2].byteLength===2*n){ var u=new Uint16Array(r[2]); connSlot=new Int32Array(n); for(var i=0;i<n;i++) connSlot[i]=u[i] }
+  else { $('aConn').disabled=true }
+  var pref='conn'; try{ pref=localStorage.getItem('rh-arrange')||'conn' }catch(e){}
+  $('load').style.display='none'; resize(); fit();
+  arrange(pref);
   var m=/^#n(\d+)$/.exec(location.hash),v=m?+m[1]:-1;
   if(v>=0&&v<n) select(v,true); else panel();
-  window.__graph={n:function(){return n},nx:nx,ny:ny,sel:function(){return sel},counts:function(){return [nUp,nDown]},select:select,zoomAt:zoomAt,layers:function(){return nL}};
+  window.__graph={mode:function(){return mode},order:function(){return order},arrange:arrange,n:function(){return n},nx:nx,ny:ny,sel:function(){return sel},counts:function(){return [nUp,nDown]},select:select,zoomAt:zoomAt,layers:function(){return nL}};
 }).catch(function(e){ $('load').textContent='Could not load the graph: '+e.message });
 })();
 </script>
