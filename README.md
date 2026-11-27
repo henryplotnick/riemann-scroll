@@ -1,5 +1,14 @@
 # The Riemann Hypothesis in Lean, in one scroll
 
+**Live site: <https://henryplotnick.github.io/riemann-scroll/>**
+
+| Proof | Scroll | Map | Circle |
+|---|---|---|---|
+| Riemann Hypothesis, original (17.4M lines) | [read](https://henryplotnick.github.io/riemann-scroll/) | [map](https://henryplotnick.github.io/riemann-scroll/graph.html) | [circle](https://henryplotnick.github.io/riemann-scroll/radial.html) |
+| Riemann Hypothesis, compact edition | [read](https://henryplotnick.github.io/riemann-scroll/rh-compact/) | [map](https://henryplotnick.github.io/riemann-scroll/rh-compact/graph.html) | [circle](https://henryplotnick.github.io/riemann-scroll/rh-compact/radial.html) |
+| Riemann Hypothesis, readable edition | [read](https://henryplotnick.github.io/riemann-scroll/rh-readable/) | [map](https://henryplotnick.github.io/riemann-scroll/rh-readable/graph.html) | [circle](https://henryplotnick.github.io/riemann-scroll/rh-readable/radial.html) |
+| Fermat's Last Theorem | [read](https://henryplotnick.github.io/riemann-scroll/fermat/) | [map](https://henryplotnick.github.io/riemann-scroll/fermat/graph.html) | [circle](https://henryplotnick.github.io/riemann-scroll/fermat/radial.html) |
+
 *Also here, with a dropdown on every page to switch between them: the same three views of the
 shorter RH proof ([`rh-compact/`](rh-compact/) and [`rh-readable/`](rh-readable/)) and of the
 Lean proof of Fermat's Last Theorem ([`fermat/`](fermat/)).*
