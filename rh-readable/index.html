@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Riemann Hypothesis in Lean (readable edition), in one scroll</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="The readable edition of the shorter Lean 4 proof of the Riemann Hypothesis as one continuously scrolling plain-text page.">
+<style>
+:root{
+  --bg:#fbfaf7; --fg:#1d1c1a; --dim:#8a857c; --line:#e4e0d8; --bar:#f2efe9;
+  --accent:#8a3b12; --hbg:#f3e9dc; --thumb:#b9b2a6; --thumb-on:#8a3b12; --panel:#ffffff;
+  --lh:18px;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#141412; --fg:#dedad2; --dim:#77736b; --line:#2b2a27; --bar:#1c1b19;
+    --accent:#e6a26f; --hbg:#2a221a; --thumb:#55524c; --thumb-on:#e6a26f; --panel:#1f1e1c; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
+  -webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+  font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{flex:none;background:var(--bar);border-bottom:1px solid var(--line);padding:6px 10px;
+  display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;position:relative;z-index:5}
+h1{font-size:13px;font-weight:650;margin:0;white-space:nowrap;letter-spacing:.01em}
+h1 span{color:var(--accent)}
+.ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+input,button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);
+  border-radius:5px;padding:3px 7px;height:26px}
+button{cursor:pointer}
+#bMap{color:inherit;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:3px 7px;height:26px;display:inline-flex;align-items:center}
+#bMap:hover{border-color:var(--accent)}
+button:hover{border-color:var(--accent)}
+input:focus,button:focus-visible,#sc:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#line{width:10.5em}
+#fq{width:15em}
+.grow{flex:1 1 12em;min-width:0}
+#pos{font-variant-numeric:tabular-nums;color:var(--dim);white-space:nowrap;margin-left:auto}
+#file{flex:1 1 100%;min-width:0;font:12px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;text-align:left}
+#file bdi{direction:ltr;unicode-bidi:isolate}
+#res{position:absolute;left:10px;right:10px;top:100%;max-height:60vh;overflow:auto;background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#res div{padding:3px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#res div:hover,#res div.on{background:var(--hbg)}
+#res .m{color:var(--dim);cursor:default;font-family:system-ui,sans-serif}
+#res small{color:var(--dim);margin-left:.8em}
+#about{position:absolute;right:10px;top:100%;width:min(34em,calc(100vw - 20px));background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
+  padding:10px 14px;display:none;line-height:1.5}
+#about p{margin:.4em 0}
+a{color:var(--accent)}
+main{flex:1 1 auto;position:relative;min-height:0}
+#sc{position:absolute;inset:0 14px 0 0;overflow:auto;scrollbar-width:none;overscroll-behavior:contain}
+#sc::-webkit-scrollbar{width:0;height:0;display:none}
+#sp{width:1px;visibility:hidden}
+#rows{position:absolute;left:0;top:0;min-width:100%;width:max-content;
+  font:13px/var(--lh) ui-monospace,SFMono-Regular,Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  font-variant-ligatures:none;tab-size:2}
+.r{height:var(--lh);white-space:pre;display:flex}
+.n{flex:none;position:sticky;left:0;width:9ch;padding-right:1ch;margin-right:1ch;text-align:right;
+  color:var(--dim);background:var(--bg);border-right:1px solid var(--line);
+  user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums}
+.t{padding-right:2ch}
+.r.h .t{color:var(--accent);font-weight:650}
+.r.h,.r.h .n{background:var(--hbg)}
+.r.w .t{color:var(--dim)}
+#track{position:absolute;top:0;right:0;bottom:0;width:14px;background:var(--bar);
+  border-left:1px solid var(--line);touch-action:none;cursor:default}
+#thumb{position:absolute;left:2px;right:2px;top:0;height:36px;border-radius:5px;background:var(--thumb)}
+#track:hover #thumb,#track.drag #thumb{background:var(--thumb-on)}
+#msg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:5px 12px;display:none;z-index:4}
+@media (max-width:640px){ h1 .long{display:none} #fq{width:100%} .grow{flex-basis:100%} .n{width:8ch} }
+.psel{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;height:26px;padding:0 4px;max-width:15em;cursor:pointer}
+.psel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>RH · readable</span><span class="long" style="color:inherit"> · the Lean proof in one scroll</span></h1>
+  <div class="ctl">
+    <button id="bTop" title="Start of the text">Start</button>
+    <button id="bMain" title="The final theorem, Main.lean, at the very end">Main theorem</button>
+    <input id="line" inputmode="numeric" placeholder="Go to line or %" aria-label="Go to line number or percentage">
+  </div>
+  <div class="ctl grow"><input id="fq" class="grow" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false"></div>
+  <select id="proofSel" class="psel" aria-label="Show the same view of another proof" title="Show the same view of another proof"><option value="">RH, original (17.4M lines)</option><option value="rh-compact">RH, compact edition</option><option value="rh-readable">RH, readable edition</option><option value="fermat">Fermat's Last Theorem</option></select>
+  <a id="bMap" href="graph.html" title="Dependency graph of every file">Map</a>
+  <button id="bAbout" aria-expanded="false">About</button>
+  <div id="pos">loading…</div>
+  <div id="file"><bdi>&nbsp;</bdi></div>
+  <div id="res" role="listbox"></div>
+  <div id="about">
+    <p><b>What this is.</b> The readable edition of the shorter Lean 4 proof of the Riemann Hypothesis and GRH, published
+    by Anthropic and Claude in November 2026 and based on Levent Alpöge's proof, joined into a single
+    plain-text stream:
+    <span id="aStats"></span>.</p>
+    <p><b>Order.</b> Each file comes after the files it imports, so nothing is used before it appears. A
+    one-line header marks where each file begins; the Lean text itself is unchanged.</p>
+    <p><b>Getting around.</b> Scroll normally, drag the bar on the right to travel the whole text, or jump
+    by line number, percentage or file name. The address bar tracks your line, so any position can be linked.</p>
+    <p><b>Source.</b> <a href="https://github.com/lsernau/grh-lean" rel="noopener">lsernau/grh-lean</a>, folder <code>grh/</code> (Apache License 2.0). Its <code>GUIDE.md</code> is the place to start reading. This is an unofficial reading copy.</p>
+  </div>
+</header>
+<main>
+  <div id="sc" tabindex="0" aria-label="Lean source text"><div id="sp"></div><div id="rows"></div></div>
+  <div id="track" aria-hidden="true"><div id="thumb"></div></div>
+  <div id="msg"></div>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var sc=$('sc'),sp=$('sp'),rowsEl=$('rows'),track=$('track'),thumb=$('thumb'),posEl=$('pos'),
+    fileEl=$('file').firstChild,msgEl=$('msg'),lineIn=$('line'),fq=$('fq'),resEl=$('res'),aboutEl=$('about');
+var LH=18,OVER=150,REAL_MAX=6000000,CACHE_MAX=12;
+var meta=null,N=0,CL=5000,V=0,H=0,vh=0,maxV=0,maxS=0,base=0,virt=0;
+var chunks=new Map(),pending=new Map(),rf=-1,rl=-1,rDirty=true,raf=0,idleT=0;
+var fStart=null,fPath=null,fLower=null;
+var fmt=function(n){return n.toLocaleString('en-US')};
+
+function say(t){ if(t){msgEl.textContent=t;msgEl.style.display='block'} else msgEl.style.display='none' }
+
+function gunzip(url){
+  return fetch(url).then(function(r){ if(!r.ok) throw new Error(r.status); return r.arrayBuffer() })
+  .then(function(ab){
+    var b=new Uint8Array(ab);
+    if(b.length>2&&b[0]===0x1f&&b[1]===0x8b){
+      if(typeof DecompressionStream==='undefined') throw new Error('This browser is too old to unpack the text.');
+      return new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    }
+    return new TextDecoder().decode(b);
+  });
+}
+
+/* ---------- geometry: a real scroll window of at most REAL_MAX px slides over V virtual px ---------- */
+function measure(){
+  vh=sc.clientHeight;
+  V=N*LH+48;
+  H=Math.min(V,REAL_MAX);
+  sp.style.height=H+'px';
+  maxV=Math.max(0,V-vh); maxS=Math.max(0,H-vh);
+}
+function recenter(force){
+  var st=sc.scrollTop;
+  var want=Math.min(virt,Math.max(maxS/2,maxS-(maxV-virt)));
+  want=Math.max(0,Math.min(maxS,want));
+  if(force||Math.abs(want-st)>H/6){ sc.scrollTop=want; st=sc.scrollTop }
+  base=virt-st;
+  if(rf>=0) rowsEl.style.top=(rf*LH-base)+'px';
+}
+function goVirt(v){ virt=Math.max(0,Math.min(maxV,v)); recenter(true); rDirty=true; schedule(); idle() }
+function goLine(l0){ goVirt(l0*LH) }
+function topLine(){ return Math.max(0,Math.min(N-1,Math.floor(virt/LH))) }
+
+function onScroll(){
+  var st=sc.scrollTop;
+  virt=base+st;
+  if(virt<0||virt>maxV){ virt=Math.max(0,Math.min(maxV,virt)); recenter(true) }
+  else if((st<4000&&base>0)||(st>maxS-4000&&base+maxS<maxV)) recenter(true);
+  schedule(); idle();
+}
+function idle(){ clearTimeout(idleT); idleT=setTimeout(function(){
+  recenter(false);
+  try{ history.replaceState(null,'','#L'+(topLine()+1)) }catch(e){}
+},250) }
+function schedule(){ if(!raf) raf=requestAnimationFrame(render) }
+
+/* ---------- chunks ---------- */
+function want(i){
+  if(i<0||i>=meta.chunks||chunks.has(i)||pending.has(i)) return;
+  pending.set(i,setTimeout(function(){
+    var a=Math.floor(virt/LH)-OVER*2,b=Math.ceil((virt+vh)/LH)+OVER*2;
+    if((i+1)*CL<a-CL||i*CL>b+CL){ pending.delete(i); return }   /* scrolled far away meanwhile */
+    gunzip('c/'+('0000'+i).slice(-5)+'.gz').then(function(t){
+      var ls=t.split('\n'); if(ls.length&&ls[ls.length-1]==='') ls.pop();
+      chunks.delete(i); chunks.set(i,ls); pending.delete(i);
+      if(chunks.size>CACHE_MAX){
+        var c=Math.floor(topLine()/CL),worst=-1,wd=-1;
+        chunks.forEach(function(_,k){ var d=Math.abs(k-c); if(d>wd){wd=d;worst=k} });
+        if(worst>=0&&worst!==i) chunks.delete(worst);
+      }
+      say(''); rDirty=true; schedule();
+    }).catch(function(e){
+      say('Could not load part of the text ('+e.message+'). Retrying…');
+      setTimeout(function(){ pending.delete(i); rDirty=true; schedule() },2500);
+    });
+  },60));
+}
+
+/* ---------- render ---------- */
+function render(){
+  raf=0; if(!meta) return;
+  var a=Math.floor(virt/LH),b=Math.min(N,Math.ceil((virt+vh)/LH)+1);
+  if(rDirty||a<rf+20&&rf>0||b>rl-20&&rl<N){
+    rf=Math.max(0,a-OVER); rl=Math.min(N,b+OVER);
+    var frag=document.createDocumentFragment();
+    for(var l=rf;l<rl;l++){
+      var ch=chunks.get(Math.floor(l/CL)),row=document.createElement('div'),n=document.createElement('span'),t=document.createElement('span');
+      n.className='n'; n.textContent=l+1; t.className='t';
+      if(ch){ var s=ch[l%CL]||''; t.textContent=s;
+        row.className=s.charCodeAt(0)===45&&s.lastIndexOf('-- ════════ [',0)===0?'r h':'r'; }
+      else { t.textContent='  ·'; row.className='r w'; }
+      row.appendChild(n); row.appendChild(t); frag.appendChild(row);
+    }
+    rowsEl.textContent=''; rowsEl.appendChild(frag);
+    rowsEl.style.top=(rf*LH-base)+'px';
+    rDirty=false;
+    var c0=Math.floor(Math.max(0,a-OVER)/CL),c1=Math.floor(Math.min(N-1,b+OVER)/CL);
+    for(var c=c0;c<=c1;c++) want(c);
+    if(a%CL>CL-1500) want(c1+1);
+    if(a%CL<1500) want(c0-1);
+  }
+  var tl=topLine();
+  posEl.textContent='line '+fmt(tl+1)+' of '+fmt(N)+' · '+(maxV?(virt/maxV*100):0).toFixed(3)+'%';
+  if(fStart){
+    var lo=0,hi=fStart.length-1,probe=Math.min(N-1,tl+2);
+    while(lo<hi){ var mid=(lo+hi+1)>>1; if(fStart[mid]<=probe) lo=mid; else hi=mid-1 }
+    var txt=fStart[0]>probe?' ':'['+fmt(lo+1)+'/'+fmt(fStart.length)+']  '+fPath[lo];
+    if(fileEl.textContent!==txt) fileEl.textContent=txt;
+  }
+  var th=track.clientHeight,hh=Math.max(36,Math.min(th,th*vh/V));
+  thumb.style.height=hh+'px';
+  thumb.style.transform='translateY('+((maxV?virt/maxV:0)*(th-hh))+'px)';
+}
+
+/* ---------- custom scrollbar ---------- */
+(function(){
+  var grab=null;
+  function at(y){ var r=track.getBoundingClientRect(),hh=thumb.offsetHeight,span=r.height-hh;
+    return span>0?Math.max(0,Math.min(1,(y-r.top-grab)/span)):0 }
+  track.addEventListener('pointerdown',function(e){
+    if(!meta) return; e.preventDefault();
+    var tr=thumb.getBoundingClientRect();
+    grab=(e.target===thumb)?e.clientY-tr.top:thumb.offsetHeight/2;
+    track.setPointerCapture(e.pointerId); track.classList.add('drag');
+    goVirt(at(e.clientY)*maxV);
+  });
+  track.addEventListener('pointermove',function(e){ if(grab!==null) goVirt(at(e.clientY)*maxV) });
+  function end(){ grab=null; track.classList.remove('drag') }
+  track.addEventListener('pointerup',end); track.addEventListener('pointercancel',end);
+  track.addEventListener('wheel',function(e){ sc.scrollTop+=e.deltaY; e.preventDefault() },{passive:false});
+})();
+
+/* ---------- controls ---------- */
+function parseHash(){ var m=/^#L(\d+)$/.exec(location.hash); return m?Math.max(0,parseInt(m[1],10)-1):null }
+lineIn.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'||!meta) return;
+  var s=lineIn.value.replace(/[,\s_]/g,'');
+  if(/^\d+(\.\d+)?%$/.test(s)) goVirt(parseFloat(s)/100*maxV);
+  else if(/^\d+$/.test(s)) goLine(Math.min(N-1,Math.max(0,parseInt(s,10)-1)));
+  else return;
+  lineIn.value=''; sc.focus();
+});
+$('bTop').onclick=function(){ if(meta){ goLine(0); sc.focus() } };
+$('bMain').onclick=function(){ if(meta){ goLine(meta.mainLine); sc.focus() } };
+$('bAbout').onclick=function(){ var on=aboutEl.style.display!=='block';
+  aboutEl.style.display=on?'block':'none'; this.setAttribute('aria-expanded',on); hideRes() };
+document.addEventListener('pointerdown',function(e){
+  if(!aboutEl.contains(e.target)&&e.target!==$('bAbout')){ aboutEl.style.display='none'; $('bAbout').setAttribute('aria-expanded',false) }
+  if(!resEl.contains(e.target)&&e.target!==fq) hideRes();
+});
+sc.addEventListener('keydown',function(e){
+  if(!meta) return;
+  if(e.key==='Home'){ goLine(0); e.preventDefault() }
+  else if(e.key==='End'){ goVirt(maxV); e.preventDefault() }
+});
+window.addEventListener('hashchange',function(){ var l=parseHash(); if(l!==null&&meta&&l!==topLine()) goLine(Math.min(N-1,l)) });
+window.addEventListener('resize',function(){ if(!meta) return; measure(); virt=Math.min(virt,maxV); recenter(true); rDirty=true; schedule() });
+sc.addEventListener('scroll',onScroll,{passive:true});
+
+/* ---------- file finder ---------- */
+var sel=-1,hits=[],fT=0;
+function hideRes(){ resEl.style.display='none'; sel=-1 }
+function showRes(){
+  var q=fq.value.trim().toLowerCase(); resEl.textContent=''; hits=[]; sel=-1;
+  if(!q){ hideRes(); return }
+  resEl.style.display='block';
+  if(!fPath){ var w=document.createElement('div'); w.className='m'; w.textContent='Loading the file list…'; resEl.appendChild(w); return }
+  var terms=q.split(/\s+/),total=0;
+  for(var i=0;i<fLower.length;i++){
+    var p=fLower[i],ok=true;
+    for(var k=0;k<terms.length;k++) if(p.indexOf(terms[k])<0){ok=false;break}
+    if(ok){ total++; if(hits.length<80) hits.push(i) }
+  }
+  var head=document.createElement('div'); head.className='m';
+  head.textContent=total?fmt(total)+' of '+fmt(fPath.length)+' files match'+(total>hits.length?' — showing the first '+hits.length:''):'No file name contains that.';
+  resEl.appendChild(head);
+  hits.forEach(function(i,j){
+    var d=document.createElement('div'),s=document.createElement('small');
+    d.textContent=fPath[i]; s.textContent='line '+fmt(fStart[i]+1); d.appendChild(s);
+    d.setAttribute('role','option');
+    d.onclick=function(){ pick(j) }; resEl.appendChild(d);
+  });
+}
+function pick(j){ if(j<0||j>=hits.length) return; goLine(fStart[hits[j]]); hideRes(); fq.blur(); sc.focus() }
+fq.addEventListener('input',function(){ clearTimeout(fT); fT=setTimeout(showRes,140) });
+fq.addEventListener('focus',function(){ if(fq.value.trim()) showRes() });
+fq.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ hideRes(); return }
+  if(e.key==='Enter'){ pick(sel<0?0:sel); return }
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp') return;
+  e.preventDefault(); if(!hits.length) return;
+  var kids=resEl.children; if(sel>=0) kids[sel+1].classList.remove('on');
+  sel=(sel+(e.key==='ArrowDown'?1:-1)+hits.length)%hits.length;
+  kids[sel+1].classList.add('on'); kids[sel+1].scrollIntoView({block:'nearest'});
+});
+
+/* ---------- start ---------- */
+fetch('meta.json').then(function(r){ if(!r.ok) throw new Error(r.status); return r.json() }).then(function(m){
+  meta=m; N=m.totalLines; CL=m.chunkLines;
+  $('aStats').textContent=fmt(m.files)+' files and '+fmt(m.sourceLines)+' lines of Lean ('+fmt(N)+' lines here, counting the added file headers)';
+  measure();
+  var l=parseHash(); goLine(l===null?0:Math.min(N-1,l));
+  sc.focus({preventScroll:true});
+  return gunzip('files.gz');
+}).then(function(t){
+  var ls=t.split('\n'); if(ls[ls.length-1]==='') ls.pop();
+  var s=new Int32Array(ls.length),p=new Array(ls.length),lo=new Array(ls.length);
+  for(var i=0;i<ls.length;i++){ var k=ls[i].indexOf('\t'); s[i]=+ls[i].slice(0,k); p[i]=ls[i].slice(k+1); lo[i]=p[i].toLowerCase() }
+  fStart=s; fPath=p; fLower=lo; schedule();
+  if(resEl.style.display==='block') showRes();
+}).catch(function(e){ say('Could not load the text: '+e.message) });
+})();
+</script>
+<script>(function(){var HERE='rh-readable',s=document.getElementById('proofSel');s.value=HERE;s.addEventListener('change',function(){var page=location.pathname.split('/').pop()||'index.html';location.href=(HERE?'../':'')+(s.value?s.value+'/':'')+page})})();</script>
+</body>
+</html>

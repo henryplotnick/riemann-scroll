@@ -104,6 +104,8 @@ ol.chain li b{flex:none;width:2.2em;text-align:right;color:var(--dim);font-weigh
 ol.chain li i{flex:none;width:8px;height:8px;border-radius:2px}
 ol.chain li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 ol.chain li.me span{font-weight:700}
+.psel{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;height:26px;padding:0 4px;max-width:15em;cursor:pointer}
+.psel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -111,7 +113,7 @@ ol.chain li.me span{font-weight:700}
   <h1><span>FLT</span><span class="long" style="color:inherit"> · the proof as a circle</span></h1>
   <input id="fq" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false">
   <div id="stp" role="group" aria-label="How to count a theorem's statement file and proof file" hidden><span class="lb">Statement + proof</span><button id="sOne" aria-pressed="true" title="A theorem's statement file and proof file are drawn as one dot and count as one step">One step</button><button id="sTwo" aria-pressed="false" title="Every file is its own dot; going from a statement to its proof is a step">Two steps</button></div>
-  <a class="btn" href="../radial.html" title="The same view of the Riemann Hypothesis proof">RH</a>
+  <select id="proofSel" class="psel" aria-label="Show the same view of another proof" title="Show the same view of another proof"><option value="">RH, original (17.4M lines)</option><option value="rh-compact">RH, compact edition</option><option value="rh-readable">RH, readable edition</option><option value="fermat">Fermat's Last Theorem</option></select>
   <a class="btn sp" href="graph.html">Layered map</a>
   <a class="btn" href="index.html">Read the text →</a>
   <div id="res" role="listbox"></div>
@@ -584,5 +586,6 @@ Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true)]).then(functio
 }).catch(function(e){ $('load').textContent='Could not load the graph: '+e.message });
 })();
 </script>
+<script>(function(){var HERE='fermat',s=document.getElementById('proofSel');s.value=HERE;s.addEventListener('change',function(){var page=location.pathname.split('/').pop()||'index.html';location.href=(HERE?'../':'')+(s.value?s.value+'/':'')+page})})();</script>
 </body>
 </html>

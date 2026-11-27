@@ -92,6 +92,8 @@ kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;ba
   h1 .long{display:none}
   #arr .lb{display:none}
 }
+.psel{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;height:26px;padding:0 4px;max-width:15em;cursor:pointer}
+.psel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -100,7 +102,7 @@ kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;ba
   <input id="fq" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false">
   <div id="arr" role="group" aria-label="Arrange files within each column"><span class="lb">Arrange</span><button id="aConn" aria-pressed="true" title="Each file sits near the files it is connected to">By connection</button><button id="aFold" aria-pressed="false" title="Files grouped by topic, then alphabetical">By topic</button></div>
   <a class="btn sp" href="radial.html" title="The proof as a circle around FinalCheck.lean">Circle view</a>
-  <a class="btn" href="../graph.html" title="The same view of the Riemann Hypothesis proof">RH</a>
+  <select id="proofSel" class="psel" aria-label="Show the same view of another proof" title="Show the same view of another proof"><option value="">RH, original (17.4M lines)</option><option value="rh-compact">RH, compact edition</option><option value="rh-readable">RH, readable edition</option><option value="fermat">Fermat's Last Theorem</option></select>
   <a class="btn" href="index.html">Read the text →</a>
   <div id="res" role="listbox"></div>
 </header>
@@ -183,6 +185,9 @@ function build(bin,txt){
   for(i=0;i<nL;i++) for(g=0;g<NG;g++) gs[i*(NG+1)+g+1]+=gs[i*(NG+1)+g];
   folderOrder=order.slice();
   mask=new Uint8Array(n);
+  /* column spacing: wide enough for names in big proofs, tighter for proofs with only a
+     few dozen files per column so the overview still fills the screen */
+  DX=Math.max(3,Math.min(40,maxW()*1.6/Math.max(1,nL-1)));
 }
 /* switch how files are arranged within each column */
 function arrange(m){
@@ -212,7 +217,7 @@ function markW(){ return Math.max(1.5,Math.min(DX*s*0.72,12)) }
 function nx(v){ return layer[v]*DX*s+tx }
 function ny(v){ return (pos[v]-lw[layer[v]]/2+0.5)*s+ty }
 function zoomAt(f,cx,cy){
-  var ns=Math.max(fitS*0.6,Math.min(26,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; schedule();
+  var ns=Math.max(fitS*0.6,Math.min(Math.max(26,150/DX),s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; schedule();
 }
 function reveal(v){
   var x=nx(v),y=ny(v);
@@ -495,5 +500,6 @@ Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true),
 }).catch(function(e){ $('load').textContent='Could not load the graph: '+e.message });
 })();
 </script>
+<script>(function(){var HERE='fermat',s=document.getElementById('proofSel');s.value=HERE;s.addEventListener('change',function(){var page=location.pathname.split('/').pop()||'index.html';location.href=(HERE?'../':'')+(s.value?s.value+'/':'')+page})})();</script>
 </body>
 </html>

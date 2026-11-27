@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map of the Lean proof of the Riemann Hypothesis (compact edition)</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Interactive dependency graph of the Lean files in the proof of the Riemann Hypothesis (compact edition).">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#fcfcfb; --fg:#0b0b0b; --fg2:#52514e; --dim:#8a8984; --line:#e4e3de; --bar:#f4f3ef; --panel:#ffffff;
+  --accent:#8a3b12; --hover:#efeee9; --edge:11,11,11;
+  --g0:#2a78d6; --g1:#eb6834; --g2:#1baf7a; --g3:#eda100; --g4:#e87ba4; --g5:#008300; --g6:#6250d6; --g7:#9a9993;
+}
+@media (prefers-color-scheme:dark){
+  :root{ color-scheme:dark;
+    --bg:#1a1a19; --fg:#f0efec; --fg2:#c3c2b7; --dim:#85847c; --line:#33322f; --bar:#222220; --panel:#262624;
+    --accent:#e6a26f; --hover:#30302d; --edge:240,239,236;
+    --g0:#3987e5; --g1:#d95926; --g2:#199e70; --g3:#c98500; --g4:#d55181; --g5:#0ca30c; --g6:#9085e9; --g7:#77766f; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;
+  font:13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{flex:none;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 10px;
+  background:var(--bar);border-bottom:1px solid var(--line);position:relative;z-index:6}
+h1{font-size:13px;font-weight:650;margin:0;white-space:nowrap}
+h1 span{color:var(--accent)}
+input,button,.btn{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;
+  padding:3px 8px;height:26px;text-decoration:none;display:inline-flex;align-items:center}
+button,.btn{cursor:pointer}
+button:hover,.btn:hover{border-color:var(--accent)}
+input:focus,button:focus-visible,.btn:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#fq{flex:1 1 14em;min-width:0;max-width:34em}
+#arr{display:inline-flex;align-items:center;gap:0;white-space:nowrap}
+#arr .lb{color:var(--fg2);margin-right:6px}
+#arr button{border-radius:0;margin-left:-1px}
+#arr button:first-of-type{border-radius:5px 0 0 5px;margin-left:0}
+#arr button:last-of-type{border-radius:0 5px 5px 0}
+#arr button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg);position:relative;z-index:1}
+.sp{margin-left:auto}
+#res{position:absolute;left:10px;right:10px;top:100%;max-height:60vh;overflow:auto;background:var(--panel);
+  border:1px solid var(--line);border-radius:0 0 6px 6px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none;
+  font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#res div{padding:3px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#res div:hover,#res div.on{background:var(--hover)}
+#res .m{color:var(--dim);cursor:default;font-family:system-ui,sans-serif}
+main{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 340px}
+#stage{position:relative;min-width:0;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
+canvas.drag{cursor:grabbing}
+#zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
+#zoom button{width:30px;height:30px;justify-content:center;font-size:16px;padding:0}
+#zoom #zf{font-size:11px}
+#tip{position:absolute;pointer-events:none;display:none;max-width:min(520px,90%);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:6px 9px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:3}
+#tip b{font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;display:block}
+#tip span{color:var(--fg2)}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg2);pointer-events:none}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px 20px;min-height:0}
+aside h2{font-size:15px;line-height:1.3;margin:0 0 6px;font-weight:650}
+aside h3{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:16px 0 6px;font-weight:600}
+aside p{margin:6px 0;color:var(--fg2)}
+.path{font:600 12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;color:var(--fg)}
+.path i{font-style:normal;font-weight:400;color:var(--fg2)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.stat b{display:block;font-size:19px;line-height:1.2;font-weight:650;font-variant-numeric:tabular-nums}
+.stat span{color:var(--fg2);font-size:12px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.lg{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center}
+.lg button{all:unset;display:contents;cursor:pointer}
+.lg .sw{width:12px;height:12px;border-radius:3px}
+.lg .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg .ct{color:var(--fg2);font-variant-numeric:tabular-nums;text-align:right}
+.lg button:hover .nm{text-decoration:underline}
+.lg button.off .nm,.lg button.off .ct{color:var(--dim)}
+.lg button.off .sw{opacity:.25}
+.lg button:focus-visible .nm{outline:2px solid var(--accent);outline-offset:2px}
+ul.fl{list-style:none;margin:0;padding:0;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+ul.fl li{display:flex;gap:6px;align-items:center;padding:1px 4px;border-radius:4px;cursor:pointer}
+ul.fl li:hover{background:var(--hover)}
+ul.fl li i{flex:none;width:8px;height:8px;border-radius:2px}
+ul.fl li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.more{color:var(--dim);font-size:12px;margin:4px 0 0}
+a{color:var(--accent)}
+kbd{font:inherit;border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--bar)}
+@media (max-width:760px){
+  main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,44%)}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  h1 .long{display:none}
+  #arr .lb{display:none}
+}
+.psel{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;height:26px;padding:0 4px;max-width:15em;cursor:pointer}
+.psel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>RH · compact</span><span class="long" style="color:inherit"> · map of the Lean proof</span></h1>
+  <input id="fq" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false">
+  <div id="arr" role="group" aria-label="Arrange files within each column"><span class="lb">Arrange</span><button id="aConn" aria-pressed="true" title="Each file sits near the files it is connected to">By connection</button><button id="aFold" aria-pressed="false" title="Files grouped by folder, then alphabetical">By folder</button></div>
+  <a class="btn sp" href="radial.html" title="The proof as a circle around Main.lean">Circle view</a>
+  <select id="proofSel" class="psel" aria-label="Show the same view of another proof" title="Show the same view of another proof"><option value="">RH, original (17.4M lines)</option><option value="rh-compact">RH, compact edition</option><option value="rh-readable">RH, readable edition</option><option value="fermat">Fermat's Last Theorem</option></select>
+  <a class="btn" href="index.html">Read the text →</a>
+  <div id="res" role="listbox"></div>
+</header>
+<main>
+  <div id="stage">
+    <canvas id="cv" tabindex="0" aria-label="Dependency graph of the proof's files. Use the search box and the side panel to explore it without a pointer."></canvas>
+    <div id="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zf" title="Show the whole graph">Fit</button></div>
+    <div id="tip"></div>
+    <div id="load">Loading the files and their imports…</div>
+  </div>
+  <aside id="side" aria-live="polite"></aside>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage'),side=$('side'),tip=$('tip'),fq=$('fq'),resEl=$('res');
+var fmt=function(n){return n.toLocaleString('en-US')};
+var GROUPS=[
+  [['New/Curve/','New/Columns/','New/TwistedHecke/','New/Core/','New/Seesaw/'],'New: short forms (theorem A)'],
+  [['New/Filling/','New/RealPlace/','New/DiscreteSeries/'],'New: enough forms (theorem B)'],
+  [['New/Heights/','New/Rows/','New/Exchange/','New/Trace/','New/GaloisRep/','New/Forms/','New/SiegelWeil/','New/Weil/','New/Selmer/','New/Patching/','New/Lift/'],'New: long forms (theorem C)'],
+  [['New/Endgame/','New/Data/','Main.lean','Statements.lean','New/Main.lean'],'New: main inequality, endgame, data'],
+  [null,'Lib: background library']
+];
+var NG=GROUPS.length,DX=40;
+var n=0,E=0,off,tg,roff,rtg,path,lower,start,grp,layer,pos,lstart,lw,order,gs,nL=0,gcount=new Int32Array(NG);
+var folderOrder=null,connSlot=null,mode='folder';
+var s=0.1,tx=0,ty=0,W=0,H=0,dpr=1,fitS=0.1;
+var sel=-1,hov=-1,iso=-1,mask=null,nUp=0,nDown=0,raf=0,col=[],ink={},mostUsed=0;
+
+function gunzip(url,asText){
+  return fetch(url).then(function(r){ if(!r.ok) throw new Error(url+' '+r.status); return r.arrayBuffer() }).then(function(ab){
+    var b=new Uint8Array(ab),p;
+    if(b[0]===0x1f&&b[1]===0x8b){
+      if(typeof DecompressionStream==='undefined') throw new Error('This browser is too old to unpack the data.');
+      p=new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')));
+    } else p=new Response(b);
+    return asText?p.text():p.arrayBuffer();
+  });
+}
+function readColors(){
+  var cs=getComputedStyle(document.documentElement),g=function(k){return cs.getPropertyValue(k).trim()};
+  col=[]; for(var i=0;i<NG;i++) col.push(g('--g'+(i===NG-1?7:i)));
+  ink={bg:g('--bg'),fg:g('--fg'),fg2:g('--fg2'),dim:g('--dim'),line:g('--line'),edge:g('--edge'),panel:g('--panel')};
+}
+
+/* ---------- build the layout ---------- */
+function build(bin,txt){
+  var dv=new DataView(bin); n=dv.getInt32(0,true); E=dv.getInt32(4,true);
+  off=new Int32Array(bin.slice(8,8+4*(n+1))); tg=new Int32Array(bin.slice(8+4*(n+1),8+4*(n+1)+4*E));
+  var ls=txt.split('\n'); if(ls[ls.length-1]==='') ls.pop();
+  path=new Array(n); lower=new Array(n); start=new Int32Array(n); grp=new Uint8Array(n);
+  var i,j,k,g;
+  for(i=0;i<n;i++){ k=ls[i].indexOf('\t'); start[i]=+ls[i].slice(0,k); var p=ls[i].slice(k+1); path[i]=p; lower[i]=p.toLowerCase();
+    for(g=0;g<NG-1;g++) if(GROUPS[g][0].some(function(k){return p.lastIndexOf(k,0)===0})) break;
+    grp[i]=g; gcount[g]++; }
+  /* reverse edges: who imports me */
+  roff=new Int32Array(n+1); for(k=0;k<E;k++) roff[tg[k]+1]++;
+  for(i=0;i<n;i++) roff[i+1]+=roff[i];
+  rtg=new Int32Array(E); var fill=roff.slice(0,n);
+  for(i=0;i<n;i++) for(k=off[i];k<off[i+1];k++) rtg[fill[tg[k]]++]=i;
+  var best=0; for(i=0;i<n;i++){ var d=roff[i+1]-roff[i]; if(d>best){best=d;mostUsed=i} }
+  /* layer = length of the longest import chain below a file (files are stored imports-first) */
+  layer=new Int32Array(n); nL=0;
+  for(i=0;i<n;i++){ var m=-1; for(k=off[i];k<off[i+1];k++){ j=tg[k]; if(layer[j]>m) m=layer[j] } layer[i]=m+1; if(m+2>nL) nL=m+2 }
+  var byPath=new Int32Array(n); for(i=0;i<n;i++) byPath[i]=i;
+  byPath=Array.prototype.slice.call(byPath).sort(function(a,b){return path[a]<path[b]?-1:1});
+  var rank=new Int32Array(n); for(i=0;i<n;i++) rank[byPath[i]]=i;
+  order=new Int32Array(n); for(i=0;i<n;i++) order[i]=i;
+  order.sort(function(a,b){ return (layer[a]-layer[b])||(grp[a]-grp[b])||(rank[a]-rank[b]) });
+  lstart=new Int32Array(nL+1); lw=new Int32Array(nL); gs=new Int32Array(nL*(NG+1)); pos=new Int32Array(n);
+  for(i=0;i<n;i++) lw[layer[i]]++;
+  for(i=0;i<nL;i++) lstart[i+1]=lstart[i]+lw[i];
+  for(i=0;i<n;i++){ var v=order[i]; pos[v]=i-lstart[layer[v]]; gs[layer[v]*(NG+1)+grp[v]+1]++ }
+  for(i=0;i<nL;i++) for(g=0;g<NG;g++) gs[i*(NG+1)+g+1]+=gs[i*(NG+1)+g];
+  folderOrder=order.slice();
+  mask=new Uint8Array(n);
+  /* column spacing: wide enough for names in big proofs, tighter for proofs with only a
+     few dozen files per column so the overview still fills the screen */
+  DX=Math.max(3,Math.min(40,maxW()*1.6/Math.max(1,nL-1)));
+}
+/* switch how files are arranged within each column */
+function arrange(m){
+  if(m==='conn'&&!connSlot) m='folder';
+  mode=m;
+  if(m==='folder') order.set(folderOrder);
+  else for(var v=0;v<n;v++) order[lstart[layer[v]]+connSlot[v]]=v;
+  for(var i=0;i<n;i++){ var u=order[i]; pos[u]=i-lstart[layer[u]] }
+  $('aConn').setAttribute('aria-pressed',m==='conn'); $('aFold').setAttribute('aria-pressed',m==='folder');
+  try{ localStorage.setItem('rh-arrange',m) }catch(e){}
+  if(sel>=0) reveal(sel);
+  panel(); schedule();
+}
+
+/* ---------- view ---------- */
+function resize(){
+  dpr=window.devicePixelRatio||1; W=stage.clientWidth; H=stage.clientHeight;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+}
+function maxW(){ var m=0; for(var i=0;i<nL;i++) if(lw[i]>m) m=lw[i]; return m }
+function fit(){
+  var ww=(nL-1)*DX,hh=maxW();
+  fitS=Math.min((W-70)/ww,(H-90)/hh); s=fitS; tx=(W-ww*s)/2; ty=(H-26)/2;
+  schedule();
+}
+function markW(){ return Math.max(1.5,Math.min(DX*s*0.72,12)) }
+function nx(v){ return layer[v]*DX*s+tx }
+function ny(v){ return (pos[v]-lw[layer[v]]/2+0.5)*s+ty }
+function zoomAt(f,cx,cy){
+  var ns=Math.max(fitS*0.6,Math.min(Math.max(26,150/DX),s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; schedule();
+}
+function reveal(v){
+  var x=nx(v),y=ny(v);
+  if(x<40||x>W-40||y<40||y>H-60){ tx+=W/2-x; ty+=H/2-y }
+  schedule();
+}
+function nodeAt(px,py){
+  if(!n) return -1;
+  var L=Math.round((px-tx)/(DX*s)); if(L<0||L>=nL) return -1;
+  if(Math.abs(px-(L*DX*s+tx))>Math.max(markW()/2+5,7)) return -1;
+  var w=lw[L],k=Math.floor((py-ty)/s+w/2);
+  if(k<0||k>=w){ if(s>=3) return -1; k=k<0?(k>-6/s?0:-1):(k<w+6/s?w-1:-1); if(k<0) return -1 }
+  return order[lstart[L]+k];
+}
+
+/* ---------- selection ---------- */
+function select(v,noReveal){
+  sel=v; iso=-1; mask.fill(0); nUp=0; nDown=0;
+  if(v>=0){
+    var st=new Int32Array(n),top=0,a,k,b;
+    st[top++]=v; mask[v]=3;
+    while(top){ a=st[--top]; for(k=off[a];k<off[a+1];k++){ b=tg[k]; if(!mask[b]){ mask[b]=1; nUp++; st[top++]=b } } }
+    st[top++]=v;
+    while(top){ a=st[--top]; for(k=roff[a];k<roff[a+1];k++){ b=rtg[k]; if(!mask[b]){ mask[b]=2; nDown++; st[top++]=b } } }
+    if(!noReveal) reveal(v);
+  }
+  try{ history.replaceState(null,'',v>=0?'#n'+v:location.pathname+location.search) }catch(e){}
+  panel(); schedule();
+}
+function isolate(g){ if(sel>=0) select(-1); iso=(iso===g?-1:g); panel(); schedule() }
+function lit(v){ return sel>=0?mask[v]!==0:(iso<0||grp[v]===iso) }
+
+/* ---------- drawing ---------- */
+function schedule(){ if(!raf) raf=requestAnimationFrame(draw) }
+function draw(){
+  raf=0; if(!n) return;
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle=ink.bg; ctx.fillRect(0,0,W,H);
+  var wpx=markW(),half=wpx/2,pitch=DX*s,any=sel>=0||iso>=0;
+  var L0=Math.max(0,Math.ceil((-half-tx)/pitch)),L1=Math.min(nL-1,Math.floor((W+half-tx)/pitch));
+  var merge=s<1.5,gap=s>=4?2:(s>=2.5?1:0),round=s>=8&&ctx.roundRect;
+  /* collect rectangles per folder colour, then fill each colour once.
+     Zoomed out, neighbouring files of one colour merge into a single run. */
+  function pass(wantLit,alpha){
+    if(!any&&!wantLit) return;
+    ctx.globalAlpha=alpha;
+    var bufs=[],g; for(g=0;g<NG;g++) bufs.push([]);
+    var minH=any?(wantLit?1:0.6):0.6;
+    for(var L=L0;L<=L1;L++){
+      var w=lw[L],x=L*pitch+tx-half,base=ty-w/2*s,o=lstart[L];
+      var k0=Math.max(0,Math.floor(-base/s)),k1=Math.min(w,Math.ceil((H-base)/s));
+      if(k0>=k1) continue;
+      if(merge){
+        var rs=-1,rg=-1;
+        for(var k=k0;k<=k1;k++){
+          var v=k<k1?order[o+k]:-1,cg=(v>=0&&(!any||lit(v)===wantLit))?grp[v]:-1;
+          if(cg!==rg){
+            if(rg>=0) bufs[rg].push(x,base+rs*s,wpx,Math.max((k-rs)*s,minH));
+            rs=k; rg=cg;
+          }
+        }
+      } else {
+        for(var k2=k0;k2<k1;k2++){
+          var u=order[o+k2]; if(any&&lit(u)!==wantLit) continue;
+          bufs[grp[u]].push(x,base+k2*s+gap/2,wpx,Math.max(1,s-gap));
+        }
+      }
+    }
+    for(g=0;g<NG;g++){
+      var b=bufs[g]; if(!b.length) continue;
+      ctx.beginPath();
+      for(var j=0;j<b.length;j+=4){ if(round) ctx.roundRect(b[j],b[j+1],b[j+2],b[j+3],3); else ctx.rect(b[j],b[j+1],b[j+2],b[j+3]) }
+      ctx.fillStyle=col[g]; ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  if(any) pass(false,0.14);
+  if(sel>=0) edges(half);
+  pass(true,1);
+  if(s>=11) labels(L0,L1,half,pitch);
+  axis(L0,L1,pitch);
+  if(sel>=0) marker(sel,true);
+  if(hov>=0&&hov!==sel) marker(hov,false);
+}
+function edges(half){
+  var x1=nx(sel),y1=ny(sel),k,v,x2,y2,c;
+  function run(a,b,arr,dir){
+    var cnt=b-a; if(!cnt) return;
+    ctx.beginPath();
+    for(k=a;k<b;k++){ v=arr[k]; x2=nx(v)-dir*half; y2=ny(v); var xs=x1+dir*half; c=(x2-xs)*0.5;
+      ctx.moveTo(xs,y1); ctx.bezierCurveTo(xs+c,y1,x2-c,y2,x2,y2) }
+    ctx.strokeStyle='rgba('+ink.edge+','+Math.max(0.03,Math.min(0.55,14/cnt)).toFixed(3)+')';
+    ctx.lineWidth=cnt>400?0.6:1.25; ctx.stroke();
+  }
+  run(off[sel],off[sel+1],tg,-1); run(roff[sel],roff[sel+1],rtg,1);
+}
+function base(p){ var i=p.lastIndexOf('/'); return p.slice(i+1).replace(/\.lean$/,'') }
+function labels(L0,L1,half,pitch){
+  var fs=Math.min(12,Math.max(10,s-3)); ctx.font=fs+'px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  ctx.textBaseline='middle'; ctx.textAlign='left';
+  var maxCh=Math.max(4,Math.floor((pitch-half*2-24)/(fs*0.61)));
+  for(var L=L0;L<=L1;L++){
+    var w=lw[L],x=L*pitch+tx+half+6,b0=ty-w/2*s,o=lstart[L];
+    var k0=Math.max(0,Math.floor(-b0/s)),k1=Math.min(w,Math.ceil((H-b0)/s));
+    for(var k=k0;k<k1;k++){ var v=order[o+k],t=base(path[v]); if(t.length>maxCh) t=t.slice(0,maxCh-1)+'…';
+      ctx.fillStyle=lit(v)?ink.fg:ink.dim; ctx.fillText(t,x,b0+(k+0.5)*s) }
+  }
+}
+function axis(L0,L1,pitch){
+  ctx.fillStyle=ink.bg; ctx.globalAlpha=0.86; ctx.fillRect(0,H-26,W,26); ctx.globalAlpha=1;
+  ctx.fillStyle=ink.line; ctx.fillRect(0,H-26,W,1);
+  ctx.font='11px system-ui,-apple-system,"Segoe UI",sans-serif'; ctx.textBaseline='middle'; ctx.fillStyle=ink.fg2;
+  var step=pitch>=60?1:pitch>=28?2:pitch>=12?5:pitch>=6?10:25;
+  ctx.textAlign='center';
+  for(var L=Math.ceil(L0/step)*step;L<=L1;L+=step){ var x=L*pitch+tx; if(x<190||x>W-150) continue; ctx.fillText(String(L),x,H-13) }
+  ctx.textAlign='left'; ctx.fillText('← layer 0: imports only Mathlib',8,H-13);
+  ctx.textAlign='right'; ctx.fillText('Main.lean, layer '+(nL-1)+' →',W-8,H-13);
+}
+function marker(v,strong){
+  var x=nx(v),y=ny(v),r=Math.max(6,markW()/2+3),wm=markW();
+  ctx.beginPath();
+  if(s>=6&&ctx.roundRect) ctx.roundRect(x-wm/2-2.5,y-s/2-1.5,wm+5,s+3,5); else ctx.arc(x,y,r,0,6.2832); ctx.lineWidth=strong?4:3; ctx.strokeStyle=ink.bg; ctx.stroke();
+  ctx.lineWidth=strong?2:1.5; ctx.strokeStyle=ink.fg; ctx.stroke();
+  if(strong&&s<11){
+    var t=base(path[v]); ctx.font='600 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    var tw=ctx.measureText(t).width,lx=x+r+6; if(lx+tw+8>W) lx=x-r-6-tw;
+    ctx.fillStyle=ink.panel; ctx.globalAlpha=0.92; ctx.fillRect(lx-4,y-10,tw+8,20); ctx.globalAlpha=1;
+    ctx.fillStyle=ink.fg; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(t,lx,y);
+  }
+}
+
+/* ---------- side panel ---------- */
+function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e }
+function fileList(arr,a,b){
+  var ul=el('ul','fl'),ids=Array.prototype.slice.call(arr.subarray(a,b)).sort(function(x,y){return path[x]<path[y]?-1:1}),lim=Math.min(ids.length,60);
+  for(var i=0;i<lim;i++)(function(v){
+    var li=el('li'),sw=el('i'),sp=el('span',null,base(path[v])); sw.style.background=col[grp[v]]; li.title=path[v];
+    li.tabIndex=0; li.setAttribute('role','button');
+    li.onclick=function(){ select(v) }; li.onkeydown=function(e){ if(e.key==='Enter') select(v) };
+    li.onmouseenter=function(){ hov=v; schedule() }; li.onmouseleave=function(){ hov=-1; schedule() };
+    li.appendChild(sw); li.appendChild(sp); ul.appendChild(li);
+  })(ids[i]);
+  var f=document.createDocumentFragment(); f.appendChild(ul);
+  if(ids.length>lim) f.appendChild(el('p','more','…and '+fmt(ids.length-lim)+' more'));
+  return f;
+}
+function stat(num,label){ var d=el('div','stat'); d.appendChild(el('b',null,num)); d.appendChild(el('span',null,label)); return d }
+function legend(){
+  var box=el('div','lg');
+  GROUPS.forEach(function(G,g){
+    var b=el('button',iso>=0&&iso!==g?'off':''),sw=el('span','sw'); sw.style.background=col[g];
+    b.title='Show only '+G[1]; b.setAttribute('aria-pressed',iso===g);
+    b.appendChild(sw); b.appendChild(el('span','nm',G[1])); b.appendChild(el('span','ct',fmt(gcount[g])));
+    b.onclick=function(){ isolate(g) }; box.appendChild(b);
+  });
+  return box;
+}
+function panel(){
+  side.textContent='';
+  if(sel<0){
+    side.appendChild(el('h2',null,'How the proof fits together'));
+    side.appendChild(el('p',null,'Each mark is one Lean file. A file sits one column to the right of the deepest file it imports, so the foundations are on the left and everything funnels into Main.lean on the far right. A column’s height is how many files sit at that depth.'));
+    side.appendChild(el('p',null,mode==='conn'
+      ?'Up and down: each file is placed near the files it imports and the files that import it, so files that work together sit together. Height has no scale; only closeness means something.'
+      :'Up and down: files are grouped by folder, then alphabetical. Within a folder, height means nothing.'));
+    var st=el('div','stats'); st.appendChild(stat(fmt(n),'files')); st.appendChild(stat(fmt(E),'imports between them'));
+    st.appendChild(stat(fmt(nL),'layers deep')); st.appendChild(stat(fmt(lw[0]),'files importing only Mathlib')); side.appendChild(st);
+    side.appendChild(el('h3',null,'Start with'));
+    var row=el('div','row');
+    [['Main.lean',n-1],['The most-imported file',mostUsed],['A random file',-2]].forEach(function(p){
+      var b=el('button',null,p[0]); b.onclick=function(){ select(p[1]===-2?Math.floor(Math.random()*n):p[1]) }; row.appendChild(b) });
+    side.appendChild(row);
+    side.appendChild(el('h3',null,'Folders (click to show one)')); side.appendChild(legend());
+    side.appendChild(el('h3',null,'Getting around'));
+    side.appendChild(el('p',null,'Scroll or pinch to zoom, drag to pan. Zoom far enough and each file gets its name. Click a file to light up everything it rests on and everything built on it; import lines are drawn for the selected file only, since all 753,261 at once would be a solid block.'));
+    return;
+  }
+  var v=sel,p=path[v],cut=p.lastIndexOf('/')+1,h=el('div','path');
+  h.appendChild(el('i',null,p.slice(0,cut))); h.appendChild(document.createTextNode(p.slice(cut)));
+  side.appendChild(h);
+  var meta=el('p'),sw=el('span'); sw.style.cssText='display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:'+col[grp[v]];
+  meta.appendChild(sw); meta.appendChild(document.createTextNode(GROUPS[grp[v]][1]+' · layer '+layer[v]+' of '+(nL-1))); side.appendChild(meta);
+  var st2=el('div','stats');
+  st2.appendChild(stat(fmt(nUp),'files it rests on ('+(nUp/(n-1)*100).toFixed(nUp/(n-1)<0.1?2:1)+'% of the proof)'));
+  st2.appendChild(stat(fmt(nDown),'files that build on it ('+(nDown/(n-1)*100).toFixed(nDown/(n-1)<0.1?2:1)+'%)'));
+  side.appendChild(st2);
+  var row2=el('div','row'),rd=el('a','btn','Read this file →'); rd.href='index.html#L'+(start[v]+1); row2.appendChild(rd);
+  var cl=el('button',null,'Clear selection'); cl.onclick=function(){ select(-1) }; row2.appendChild(cl); side.appendChild(row2);
+  var di=off[v+1]-off[v],dd=roff[v+1]-roff[v];
+  side.appendChild(el('h3',null,'Imports directly ('+fmt(di)+')'));
+  if(di) side.appendChild(fileList(tg,off[v],off[v+1])); else side.appendChild(el('p',null,'Nothing from this project, only Mathlib.'));
+  side.appendChild(el('h3',null,'Imported directly by ('+fmt(dd)+')'));
+  if(dd) side.appendChild(fileList(rtg,roff[v],roff[v+1])); else side.appendChild(el('p',null,'Nothing. This is the end of the proof.'));
+  side.scrollTop=0;
+}
+
+/* ---------- pointer input ---------- */
+(function(){
+  var pts=new Map(),moved=0,lastD=0,down=null;
+  function xy(e){ var r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top] }
+  cv.addEventListener('pointerdown',function(e){
+    cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,xy(e)); moved=0; down=xy(e); cv.classList.add('drag'); hideTip();
+    if(pts.size===2){ var a=Array.from(pts.values()); lastD=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]) }
+  });
+  cv.addEventListener('pointermove',function(e){
+    var p=xy(e);
+    if(!pts.has(e.pointerId)){ if(e.pointerType==='mouse') hover(p[0],p[1]); return }
+    var q=pts.get(e.pointerId); pts.set(e.pointerId,p);
+    if(pts.size===1){ tx+=p[0]-q[0]; ty+=p[1]-q[1]; moved+=Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1]); schedule() }
+    else if(pts.size===2){ var a=Array.from(pts.values()),d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);
+      if(lastD>0) zoomAt(d/lastD,(a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2); lastD=d; moved=99 }
+  });
+  function up(e){
+    if(!pts.has(e.pointerId)) return; pts.delete(e.pointerId); if(!pts.size) cv.classList.remove('drag');
+    if(e.type==='pointerup'&&moved<5&&down&&!pts.size){ var v=nodeAt(down[0],down[1]); if(v!==sel) select(v,true) }
+  }
+  cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  cv.addEventListener('pointerleave',function(){ if(hov>=0){ hov=-1; schedule() } hideTip() });
+  cv.addEventListener('wheel',function(e){ e.preventDefault(); var p=xy(e);
+    var dy=e.deltaMode===1?e.deltaY*32:e.deltaY; zoomAt(Math.exp(-dy*(e.ctrlKey?0.01:0.0022)),p[0],p[1]); hideTip() },{passive:false});
+  cv.addEventListener('keydown',function(e){
+    var st=60; if(e.key==='ArrowLeft') tx+=st; else if(e.key==='ArrowRight') tx-=st; else if(e.key==='ArrowUp') ty+=st; else if(e.key==='ArrowDown') ty-=st;
+    else if(e.key==='+'||e.key==='=') return zoomAt(1.4,W/2,H/2); else if(e.key==='-') return zoomAt(1/1.4,W/2,H/2);
+    else if(e.key==='Escape') return select(-1); else return;
+    e.preventDefault(); schedule();
+  });
+  $('zi').onclick=function(){ zoomAt(1.6,W/2,H/2) }; $('zo').onclick=function(){ zoomAt(1/1.6,W/2,H/2) }; $('zf').onclick=fit;
+})();
+function hideTip(){ tip.style.display='none' }
+function hover(px,py){
+  var v=nodeAt(px,py); if(v!==hov){ hov=v; schedule() }
+  if(v<0){ hideTip(); return }
+  tip.textContent=''; tip.appendChild(el('b',null,path[v]));
+  tip.appendChild(el('span',null,GROUPS[grp[v]][1]+' · layer '+layer[v]+' · imports '+fmt(off[v+1]-off[v])+' · imported by '+fmt(roff[v+1]-roff[v])));
+  tip.style.display='block';
+  var tw=tip.offsetWidth,th=tip.offsetHeight,x=px+14,y=py+14; if(x+tw>W-6) x=Math.max(6,px-tw-14); if(y+th>H-30) y=Math.max(6,py-th-14);
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+
+/* ---------- file finder ---------- */
+var hits=[],hsel=-1,fT=0;
+function hideRes(){ resEl.style.display='none'; hsel=-1 }
+function showRes(){
+  var q=fq.value.trim().toLowerCase(); resEl.textContent=''; hits=[]; hsel=-1;
+  if(!q||!n){ hideRes(); return }
+  var terms=q.split(/\s+/),total=0;
+  for(var i=0;i<n;i++){ var p=lower[i],ok=true; for(var k=0;k<terms.length;k++) if(p.indexOf(terms[k])<0){ok=false;break}
+    if(ok){ total++; if(hits.length<80) hits.push(i) } }
+  resEl.style.display='block';
+  resEl.appendChild(el('div','m',total?fmt(total)+' of '+fmt(n)+' files match'+(total>hits.length?' — showing the first '+hits.length:''):'No file name contains that.'));
+  hits.forEach(function(v,j){ var d=el('div',null,path[v]); d.setAttribute('role','option'); d.onclick=function(){ pick(j) }; resEl.appendChild(d) });
+}
+function pick(j){ if(j<0||j>=hits.length) return; var v=hits[j]; hideRes(); fq.blur(); select(v); cv.focus() }
+fq.addEventListener('input',function(){ clearTimeout(fT); fT=setTimeout(showRes,140) });
+fq.addEventListener('focus',function(){ if(fq.value.trim()) showRes() });
+fq.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ hideRes(); return } if(e.key==='Enter'){ pick(hsel<0?0:hsel); return }
+  if(e.key!=='ArrowDown'&&e.key!=='ArrowUp') return; e.preventDefault(); if(!hits.length) return;
+  var kids=resEl.children; if(hsel>=0) kids[hsel+1].classList.remove('on');
+  hsel=(hsel+(e.key==='ArrowDown'?1:-1)+hits.length)%hits.length; kids[hsel+1].classList.add('on'); kids[hsel+1].scrollIntoView({block:'nearest'});
+});
+document.addEventListener('pointerdown',function(e){ if(!resEl.contains(e.target)&&e.target!==fq) hideRes() });
+
+/* ---------- start ---------- */
+readColors();
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){ readColors(); panel(); schedule() });
+window.addEventListener('resize',function(){ resize(); schedule() });
+$('aConn').onclick=function(){ if(mode!=='conn') arrange('conn') };
+$('aFold').onclick=function(){ if(mode!=='folder') arrange('folder') };
+Promise.all([gunzip('graph.bin.gz',false),gunzip('files.gz',true),
+  gunzip('order.bin.gz',false).catch(function(){ return null })]).then(function(r){
+  build(r[0],r[1]);
+  if(r[2]&&r[2].byteLength===2*n){ var u=new Uint16Array(r[2]); connSlot=new Int32Array(n); for(var i=0;i<n;i++) connSlot[i]=u[i] }
+  else { $('aConn').disabled=true }
+  var pref='conn'; try{ pref=localStorage.getItem('rh-arrange')||'conn' }catch(e){}
+  $('load').style.display='none'; resize(); fit();
+  arrange(pref);
+  var m=/^#n(\d+)$/.exec(location.hash),v=m?+m[1]:-1;
+  if(v>=0&&v<n) select(v,true); else panel();
+  window.__graph={mode:function(){return mode},order:function(){return order},arrange:arrange,n:function(){return n},nx:nx,ny:ny,sel:function(){return sel},counts:function(){return [nUp,nDown]},select:select,zoomAt:zoomAt,layers:function(){return nL}};
+}).catch(function(e){ $('load').textContent='Could not load the graph: '+e.message });
+})();
+</script>
+<script>(function(){var HERE='rh-compact',s=document.getElementById('proofSel');s.value=HERE;s.addEventListener('change',function(){var page=location.pathname.split('/').pop()||'index.html';location.href=(HERE?'../':'')+(s.value?s.value+'/':'')+page})})();</script>
+</body>
+</html>

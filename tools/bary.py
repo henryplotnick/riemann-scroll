@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Barycenter ordering for the map: place each file near the files it is connected to.
 
-usage: python3 -I bary.py <site_dir> [sweeps] [combined_sweeps] [topics]
+usage: python3 -I bary.py <site_dir> [sweeps] [combined_sweeps] [topics|folders]
 Reads graph.bin.gz + files.gz from the site, writes order.bin.gz there:
 little-endian uint16 per node = its slot within its layer (top to bottom).
 """
@@ -42,6 +42,9 @@ def main():
             m = tre.match(p.rsplit('/', 1)[-1])
             return TOPICS.index(m.group(1)) if m and m.group(1) in TOPICS else len(TOPICS)
         grp = np.array([g_of(p) for p in paths])
+    elif len(sys.argv) > 4 and sys.argv[4] == 'folders':  # any project: start from second-level folders
+        names = sorted({'/'.join(p.split('/')[:2]) for p in paths})
+        grp = np.array([names.index('/'.join(p.split('/')[:2])) for p in paths])
     else:
         grp = np.array([next((g for g, k in enumerate(GROUPS) if p.startswith(k)), len(GROUPS)) for p in paths])
     alpha = np.argsort(np.argsort(np.array(paths, dtype=object)))

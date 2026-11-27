@@ -1,6 +1,8 @@
 # The Riemann Hypothesis in Lean, in one scroll
 
-*Also here: the same three views of the Lean proof of Fermat's Last Theorem, in [`fermat/`](fermat/).*
+*Also here, with a dropdown on every page to switch between them: the same three views of the
+shorter RH proof ([`rh-compact/`](rh-compact/) and [`rh-readable/`](rh-readable/)) and of the
+Lean proof of Fermat's Last Theorem ([`fermat/`](fermat/)).*
 
 A single web page that shows the complete Lean 4 proof of the Riemann Hypothesis
 (Levent Alpöge with Claude, released 20 November 2026) as one continuously
@@ -77,4 +79,34 @@ python3 -I tools/gbuild.py fermat flt
 python3 -I tools/bary.py fermat 64 40 topics
 python3 -I tools/mkfermat.py .   # regenerate fermat/*.html from the RH pages
 python3 -m http.server 8000      # then open http://localhost:8000/fermat/
+```
+
+## The shorter RH proof (`rh-compact/`, `rh-readable/`)
+
+The same pages for <https://github.com/lsernau/grh-lean> (Anthropic and Claude, November 2026,
+based on Alpöge's proof; Apache License 2.0, commit `72fead10`), which proves the same five
+theorems far more briefly. It comes in two editions:
+
+| Edition | Files | Lines | Lines of code (no comments or blank lines) |
+|---|---|---|---|
+| compact (`grh-compact/`) | 794 | 112,827 | 76,151 |
+| readable (`grh/`) | 803 | 477,124 | 299,902 |
+
+Colours follow each edition's `GUIDE.md`. In the compact edition, the folders of `New/` are grouped by
+which of the three main theorems they serve (A, short forms; B, enough forms; C, long forms). In the
+readable edition, they follow the stages of the argument. The background library `Lib/` is grey.
+
+```bash
+git clone https://github.com/lsernau/grh-lean.git grh-lean
+git -C grh-lean checkout 72fead102f663d5c7a407964a13dc0cf9d977207
+C=72fead102f663d5c7a407964a13dc0cf9d977207
+python3 -I tools/grhbuild.py grh-lean/grh-compact rh-compact $C compact
+python3 -I tools/grhbuild.py grh-lean/grh rh-readable $C readable
+python3 -I tools/gbuild.py rh-compact grh-lean/grh-compact/src
+python3 -I tools/gbuild.py rh-readable grh-lean/grh/src
+python3 -I tools/bary.py rh-compact 64 40 folders
+python3 -I tools/bary.py rh-readable 64 40 folders
+python3 -I tools/mkgrh.py .      # regenerate rh-compact/ and rh-readable/ pages from the RH pages
+python3 -I tools/mkfermat.py .   # regenerate fermat/ pages likewise
+python3 -m http.server 8000      # then open http://localhost:8000/rh-compact/
 ```

@@ -25,15 +25,13 @@ SWITCH = ('<a class="btn" href="../{page}" title="The same view of the Riemann H
 
 def edit(name, reps, switch_before):
     s = open(f'{site}/{name}').read()
-    rh_link = '<a class="btn" href="fermat/%s" title="The same view of the Fermat\'s Last Theorem proof">FLT</a>\n  ' % name
-    assert s.count(rh_link) == 1, (name, 'FLT link')
-    s = s.replace(rh_link, '')
+    assert s.count("var HERE=''") == 1, (name, 'proof switcher')
+    s = s.replace("var HERE=''", "var HERE='fermat'")
     s = re.sub(r'var GROUPS=\[.*?\n\];', lambda m: GROUPS, s, count=1, flags=re.S)
     for a, b, n in reps:
         c = s.count(a)
         assert c == n, (name, a, c)
         s = s.replace(a, b)
-    s = s.replace(switch_before, SWITCH.format(page=name) + switch_before, 1)
     left = re.findall(r'Main\.lean|Riemann|Alpö|alpo\.ge|175,187|17\.4 million|leanprover-community/riemann', s)
     left = [x for x in left if x != 'Riemann']  # the RH switch button's title is fine
     assert not left, (name, left)

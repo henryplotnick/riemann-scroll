@@ -74,6 +74,8 @@ main{flex:1 1 auto;position:relative;min-height:0}
 #msg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:var(--panel);
   border:1px solid var(--line);border-radius:6px;padding:5px 12px;display:none;z-index:4}
 @media (max-width:640px){ h1 .long{display:none} #fq{width:100%} .grow{flex-basis:100%} .n{width:8ch} }
+.psel{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:5px;height:26px;padding:0 4px;max-width:15em;cursor:pointer}
+.psel:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 </style>
 </head>
 <body>
@@ -85,7 +87,7 @@ main{flex:1 1 auto;position:relative;min-height:0}
     <input id="line" inputmode="numeric" placeholder="Go to line or %" aria-label="Go to line number or percentage">
   </div>
   <div class="ctl grow"><input id="fq" class="grow" placeholder="Find a file by name…" aria-label="Find a file by name" autocomplete="off" spellcheck="false"></div>
-  <a class="btn" href="fermat/index.html" title="The same view of the Fermat's Last Theorem proof">FLT</a>
+  <select id="proofSel" class="psel" aria-label="Show the same view of another proof" title="Show the same view of another proof"><option value="">RH, original (17.4M lines)</option><option value="rh-compact">RH, compact edition</option><option value="rh-readable">RH, readable edition</option><option value="fermat">Fermat's Last Theorem</option></select>
   <a id="bMap" href="graph.html" title="Dependency graph of all 175,187 files">Map</a>
   <button id="bAbout" aria-expanded="false">About</button>
   <div id="pos">loading…</div>
@@ -326,5 +328,6 @@ fetch('meta.json').then(function(r){ if(!r.ok) throw new Error(r.status); return
 }).catch(function(e){ say('Could not load the text: '+e.message) });
 })();
 </script>
+<script>(function(){var HERE='',s=document.getElementById('proofSel');s.value=HERE;s.addEventListener('change',function(){var page=location.pathname.split('/').pop()||'index.html';location.href=(HERE?'../':'')+(s.value?s.value+'/':'')+page})})();</script>
 </body>
 </html>
